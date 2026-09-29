@@ -1,4 +1,6 @@
 *.log
+*.sql
+Jalankan_Server.*
 .DS_Store
 .env
 .env.backup

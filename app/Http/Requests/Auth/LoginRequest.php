@@ -44,8 +44,8 @@ class LoginRequest extends FormRequest
 
         $login_id = $this->input('login_id');
         
-        // Normalize: strip spaces (so "wahyudi hasbi" matches "wahyudihasbi")
-        $login_id_normalized = strtolower(str_replace(' ', '', $login_id));
+        // Normalize: strip all non-alphanumeric characters (so "Wahyudi Hasbi, S.Pd" typed as "wahyudi hasbi" matches "wahyudihasbi")
+        $login_id_normalized = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $login_id));
         
         // Find user by username (no-space normalized), NIP, exact name, email, or email prefix
         $user = \App\Models\User::where('username', $login_id_normalized)

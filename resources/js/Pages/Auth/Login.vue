@@ -43,24 +43,23 @@ const submit = () => {
 
         <form @submit.prevent="submit" class="space-y-6">
             <div>
-                <label for="login_id" class="block text-sm font-medium text-slate-300">Username / NIP / Nama Lengkap</label>
+                <label for="login_id" class="block text-sm font-semibold text-slate-700">Username / NIP / Nama Lengkap</label>
                 <div class="mt-1 relative rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                             fill="currentColor" aria-hidden="true">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
                         </svg>
                     </div>
                     <input id="login_id" type="text" v-model="form.login_id" required autofocus autocomplete="username"
-                        class="block w-full pl-10 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+                        class="block w-full pl-10 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                         placeholder="Masukkan Username, NIP, atau Nama Lengkap" />
                 </div>
                 <InputError class="mt-2" :message="form.errors.login_id" />
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-300">Kata Sandi</label>
+                <label for="password" class="block text-sm font-semibold text-slate-700">Kata Sandi</label>
                 <div class="mt-1 relative rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -72,7 +71,7 @@ const submit = () => {
                     </div>
                     <input id="password" :type="showPassword ? 'text' : 'password'" v-model="form.password" required
                         autocomplete="current-password"
-                        class="block w-full pl-10 pr-10 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+                        class="block w-full pl-10 pr-10 bg-white border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                         placeholder="••••••••" />
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                         <button type="button" @click="showPassword = !showPassword"
@@ -98,8 +97,8 @@ const submit = () => {
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <input id="remember_me" type="checkbox" v-model="form.remember"
-                        class="h-4 w-4 bg-slate-800 border-slate-600 rounded text-blue-600 focus:ring-blue-500 transition-colors" />
-                    <label for="remember_me" class="ml-2 block text-sm text-slate-300">
+                        class="h-4 w-4 bg-white border-slate-300 rounded text-blue-600 focus:ring-blue-500 transition-colors" />
+                    <label for="remember_me" class="ml-2 block text-sm font-medium text-slate-600">
                         Ingat saya
                     </label>
                 </div>
@@ -108,15 +107,15 @@ const submit = () => {
 
             <div>
                 <button type="submit" :disabled="form.processing"
-                    class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-slate-900 transform transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md shadow-blue-500/30 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white transform transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed">
                     Masuk
                 </button>
             </div>
 
-            <div class="mt-6 text-center border-t border-slate-700/50 pt-4">
-                <p class="text-sm text-slate-400">
+            <div class="mt-6 text-center border-t border-slate-100 pt-4">
+                <p class="text-sm text-slate-500">
                     Belum punya akun? <br class="sm:hidden">
-                    <span class="font-medium text-slate-300">Hubungi Admin Sekolah</span>
+                    <span class="font-semibold text-slate-700">Hubungi Admin Sekolah</span>
                 </p>
             </div>
         </form>

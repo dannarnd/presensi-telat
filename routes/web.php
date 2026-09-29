@@ -27,6 +27,8 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/backup-daily', [AdminController::class, 'backupDaily'])->name('backup_daily');
+    Route::get('/backup-database', [AdminController::class, 'backupDatabase'])->name('backup_database');
     
     Route::get('/users', [AdminController::class, 'users'])->name('users.index');
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');

@@ -54,18 +54,15 @@ const menus = getMenus();
 <template>
     <div class="h-screen overflow-hidden bg-slate-50 flex font-sans">
         <!-- Sidebar -->
-        <aside class="w-64 lg:w-72 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col relative overflow-hidden">
-            <!-- Sidebar Background Pattern -->
-            <div
-                class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none">
-            </div>
+        <aside class="w-64 lg:w-72 bg-white border-r border-slate-200 text-slate-800 flex-shrink-0 hidden md:flex flex-col relative overflow-hidden">
+            <!-- Sidebar Background Pattern Removed for Light Mode -->
 
-            <div class="h-20 flex items-center px-6 bg-slate-950 relative z-10 border-b border-white/5">
+            <div class="h-20 flex items-center px-6 bg-slate-50 relative z-10 border-b border-slate-100">
                 <div class="flex items-center space-x-3">
-                    <ApplicationLogo class="w-10 h-10 drop-shadow-md" />
+                    <ApplicationLogo class="w-10 h-10 drop-shadow-sm" />
                     <div>
-                        <div class="text-lg font-bold tracking-tight text-white leading-tight">Presensi Telat</div>
-                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">SMKN 5 Telkom</div>
+                        <div class="text-lg font-bold tracking-tight text-slate-800 leading-tight">Presensi Pembinaan</div>
+                        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">SMKN 5 Telkom</div>
                     </div>
                 </div>
             </div>
@@ -75,7 +72,7 @@ const menus = getMenus();
                 <nav class="space-y-2">
                     <Link v-for="menu in menus" :key="menu.name" :href="route(menu.route)" :class="[
                         'flex items-center px-4 py-3 rounded-xl transition-all duration-300 group',
-                        route().current(menu.route) ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white font-medium'
+                        route().current(menu.route) ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/20 font-semibold' : 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 font-medium'
                     ]">
                         <svg :class="['w-5 h-5 mr-3 transition-transform duration-300', route().current(menu.route) ? 'transform scale-110' : 'opacity-75 group-hover:opacity-100 group-hover:scale-110']"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,19 +85,19 @@ const menus = getMenus();
 
             <div class="mt-auto p-6 relative z-10">
                 <div
-                    class="bg-slate-800/80 backdrop-blur-md rounded-2xl p-4 flex items-center space-x-3 border border-white/5 shadow-xl">
+                    class="bg-slate-50 rounded-2xl p-4 flex items-center space-x-3 border border-slate-200 shadow-sm">
                     <div
-                        class="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold border border-white/10 shrink-0">
+                        class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200 shrink-0">
                         {{ user.name.charAt(0) }}
                     </div>
                     <div class="overflow-hidden">
-                        <div class="text-sm font-bold text-white truncate">{{ user.name }}</div>
-                        <div class="text-xs text-blue-400 font-medium capitalize">{{ role.replace('_', ' ') }}</div>
+                        <div class="text-sm font-bold text-slate-800 truncate">{{ user.name }}</div>
+                        <div class="text-xs text-blue-600 font-semibold capitalize">{{ role.replace('_', ' ') }}</div>
                     </div>
                 </div>
                 <div class="mt-4 space-y-1">
                     <Link :href="route('profile.edit')"
-                        class="w-full flex items-center space-x-2 text-sm text-slate-400 hover:text-white py-2 transition-colors group">
+                        class="w-full flex items-center space-x-2 text-sm text-slate-600 hover:text-blue-600 py-2 transition-colors group">
                         <svg class="w-4 h-4 group-hover:rotate-45 transition-transform" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -111,7 +108,7 @@ const menus = getMenus();
                         <span>Ganti Password</span>
                     </Link>
                     <Link :href="route('logout')" method="post" as="button"
-                        class="w-full flex items-center space-x-2 text-sm text-slate-400 hover:text-red-400 py-2 transition-colors group">
+                        class="w-full flex items-center space-x-2 text-sm text-slate-600 hover:text-red-600 py-2 transition-colors group">
                         <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -129,7 +126,7 @@ const menus = getMenus();
             <header class="md:hidden bg-white shadow-sm h-16 flex items-center justify-between px-4 z-20 relative">
                 <div class="flex items-center space-x-2">
                     <ApplicationLogo class="w-8 h-8 drop-shadow-sm" />
-                    <span class="text-lg font-bold text-slate-800">Presensi Telat</span>
+                    <span class="text-lg font-bold text-slate-800">Presensi Pembinaan</span>
                 </div>
                 <button @click="showingNavigationDropdown = !showingNavigationDropdown"
                     class="text-slate-500 hover:text-blue-600 transition-colors p-2">
@@ -144,21 +141,21 @@ const menus = getMenus();
 
             <!-- Mobile Menu -->
             <div v-if="showingNavigationDropdown"
-                class="md:hidden bg-slate-900 text-white shadow-xl absolute w-full z-50 top-16 border-t border-slate-800">
+                class="md:hidden bg-white text-slate-800 shadow-xl absolute w-full z-50 top-16 border-t border-slate-100">
                 <div class="px-4 py-4 space-y-2">
                     <Link v-for="menu in menus" :key="menu.name" :href="route(menu.route)" :class="[
                         'block px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                        route().current(menu.route) ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                        route().current(menu.route) ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
                     ]" @click="showingNavigationDropdown = false">
                         {{ menu.name }}
                     </Link>
-                    <div class="border-t border-slate-800 my-2 pt-2"></div>
+                    <div class="border-t border-slate-100 my-2 pt-2"></div>
                     <Link :href="route('profile.edit')"
-                        class="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:bg-slate-800">
+                        class="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-50">
                         Ganti Password
                     </Link>
                     <Link :href="route('logout')" method="post" as="button"
-                        class="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-red-400 hover:bg-slate-800">
+                        class="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:bg-slate-50">
                         Keluar
                     </Link>
                 </div>

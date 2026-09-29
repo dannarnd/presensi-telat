@@ -16,11 +16,76 @@ class AdminController extends Controller
         $totalClasses = SchoolClass::count();
         $totalStudents = Student::count();
 
+        // Get today's delay logs with count
+        $todayLogs = \App\Models\DelayLog::with(['student' => function ($query) {
+                $query->withCount('activeDelayLogs')->with('schoolClass');
+            }])
+            ->whereDate('created_at', today())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('Admin/Dashboard', [
             'totalUsers' => $totalUsers,
             'totalClasses' => $totalClasses,
             'totalStudents' => $totalStudents,
+            'todayLogs' => $todayLogs,
         ]);
+    }
+
+    public function backupDaily()
+    {
+        // Generate filename: Backup_Data_Hari_Ini_Selasa_29_Sep_2026_Jam_13_17.xlsx
+        $hari = \Carbon\Carbon::now()->isoFormat('dddd');
+        $tanggal = \Carbon\Carbon::now()->isoFormat('D_MMM_Y');
+        $jam = \Carbon\Carbon::now()->format('H_i');
+        
+        $filename = "Backup_Data_Hari_Ini_{$hari}_{$tanggal}_Jam_{$jam}.xlsx";
+
+        $logs = \App\Models\DelayLog::with(['student.schoolClass'])
+            ->whereDate('created_at', today())
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'Tanggal' => $log->created_at->format('d-m-Y'),
+                    'Hari' => $log->created_at->isoFormat('dddd'),
+                    'Jam' => $log->created_at->format('H:i:s'),
+                    'NISN' => $log->student->nisn ?? '-',
+                    'Nama Siswa' => $log->student->name ?? '-',
+                    'Kelas' => $log->student->schoolClass->name ?? '-',
+                    'Alasan' => $log->reason,
+                    'Petugas (Guru Piket)' => $log->reporter_name ?? '-',
+                ];
+            });
+
+        return (new \Rap2hpoutre\FastExcel\FastExcel($logs))->download($filename);
+    }
+
+    public function backupDatabase()
+    {
+        $hari = \Carbon\Carbon::now()->isoFormat('dddd');
+        $tanggal = \Carbon\Carbon::now()->isoFormat('D_MMM_Y');
+        $jam = \Carbon\Carbon::now()->format('H_i');
+        
+        $filename = "Database_Full_{$hari}_{$tanggal}_Jam_{$jam}.sql";
+        $tempPath = storage_path('app/' . $filename);
+
+        $dbName = env('DB_DATABASE', 'presensi_telat');
+        $dbUser = env('DB_USERNAME', 'root');
+        $dbPass = env('DB_PASSWORD', '');
+
+        $passwordStr = $dbPass ? "-p\"{$dbPass}\"" : "";
+        
+        // Use mysqldump (assumed to be in PATH for Laragon)
+        $command = "mysqldump -u {$dbUser} {$passwordStr} {$dbName} > \"{$tempPath}\"";
+        
+        exec($command, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            return back()->with('error', 'Gagal membackup database SQL. Pastikan mysqldump tersedia di server.');
+        }
+
+        return response()->download($tempPath)->deleteFileAfterSend(true);
     }
 
     public function users()

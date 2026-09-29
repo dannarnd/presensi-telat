@@ -45,7 +45,16 @@ const filteredClassStudents = computed(() => {
 const selectedStudent = ref(null);
 
 // Form reasons
-const reasons = ['Kesiangan', 'Macet', 'Kendaraan Rusak', 'Cuaca/Hujan'];
+const reasons = [
+    'Kesiangan',
+    'Macet',
+    'Kendaraan Rusak / Ban Kempes',
+    'Hujan / Cuaca Buruk',
+    'Jarak Rumah Jauh',
+    'Telat Bangun',
+    'Izin Urusan Keluarga',
+    'Sakit',
+];
 const showManualReason = ref(false);
 
 const form = useForm({
@@ -62,7 +71,7 @@ watch(searchQuery, (newVal) => {
         searchResults.value = [];
         return;
     }
-    
+
     isSearching.value = true;
     searchTimeout = setTimeout(async () => {
         try {
@@ -155,8 +164,8 @@ const logSearchQuery = ref('');
 const filteredTodayLogs = computed(() => {
     if (!logSearchQuery.value) return props.todayLogs;
     const q = logSearchQuery.value.toLowerCase();
-    return props.todayLogs.filter(log => 
-        log.student?.name.toLowerCase().includes(q) || 
+    return props.todayLogs.filter(log =>
+        log.student?.name.toLowerCase().includes(q) ||
         log.student?.nisn.toLowerCase().includes(q) ||
         log.student?.school_class?.name.toLowerCase().includes(q)
     );
@@ -213,14 +222,17 @@ const submitDeleteLog = () => {
 
         <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
+
                 <!-- Input Panel (Left) -->
                 <div class="lg:col-span-5">
-                    <div class="bg-white rounded-2xl shadow-xl shadow-blue-100/50 border border-blue-50 p-6 sticky top-8">
+                    <div
+                        class="bg-white rounded-2xl shadow-xl shadow-blue-100/50 border border-blue-50 p-6 sticky top-8">
                         <div class="flex items-center space-x-3 mb-6">
                             <div class="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
                                 </svg>
                             </div>
                             <div>
@@ -228,55 +240,50 @@ const submitDeleteLog = () => {
                                 <p class="text-xs text-slate-500">Pilih metode pencarian siswa</p>
                             </div>
                         </div>
-                        
+
                         <!-- Tabs -->
                         <div class="flex space-x-2 mb-6 bg-slate-100 p-1 rounded-xl" v-if="!selectedStudent">
-                            <button 
-                                @click="activeTab = 'search'"
-                                :class="['flex-1 py-2 text-sm font-bold rounded-lg transition-all', activeTab === 'search' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700']"
-                            >
+                            <button @click="activeTab = 'search'"
+                                :class="['flex-1 py-2 text-sm font-bold rounded-lg transition-all', activeTab === 'search' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700']">
                                 Ketik Nama
                             </button>
-                            <button 
-                                @click="activeTab = 'browse'"
-                                :class="['flex-1 py-2 text-sm font-bold rounded-lg transition-all', activeTab === 'browse' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700']"
-                            >
+                            <button @click="activeTab = 'browse'"
+                                :class="['flex-1 py-2 text-sm font-bold rounded-lg transition-all', activeTab === 'browse' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700']">
                                 Pilih per Kelas
                             </button>
                         </div>
-                        
+
                         <!-- Mode 1: Smart Search -->
                         <div v-if="activeTab === 'search' && !selectedStudent" class="mb-5 animate-fade-in">
                             <div class="relative">
-                                <input 
-                                    type="text" 
-                                    v-model="searchQuery" 
-                                    placeholder="Ketik nama atau NIS siswa..." 
-                                    class="w-full border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm text-base p-4 pl-12 transition-colors"
-                                >
-                                <svg class="w-6 h-6 text-slate-400 absolute left-4 top-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                <input type="text" v-model="searchQuery" placeholder="Ketik nama atau NIS siswa..."
+                                    class="w-full border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm text-base p-4 pl-12 transition-colors">
+                                <svg class="w-6 h-6 text-slate-400 absolute left-4 top-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            
+
                             <!-- Search Results (inline, not absolute to avoid overlap) -->
-                            <div v-if="searchResults.length > 0" class="mt-2 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                            <div v-if="searchResults.length > 0"
+                                class="mt-2 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
                                 <ul class="max-h-60 overflow-auto divide-y divide-slate-100">
-                                    <li 
-                                        v-for="student in searchResults" 
-                                        :key="student.id"
+                                    <li v-for="student in searchResults" :key="student.id"
                                         @click="selectStudent(student)"
-                                        class="cursor-pointer hover:bg-blue-50 px-4 py-3 transition-colors flex justify-between items-center"
-                                    >
+                                        class="cursor-pointer hover:bg-blue-50 px-4 py-3 transition-colors flex justify-between items-center">
                                         <div>
                                             <div class="font-bold text-slate-900">{{ student.name }}</div>
                                             <div class="text-xs font-medium text-slate-500">{{ student.nisn }}</div>
                                         </div>
-                                        <div class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold shrink-0 ml-2">{{ student.school_class?.name }}</div>
+                                        <div
+                                            class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold shrink-0 ml-2">
+                                            {{ student.school_class?.name }}</div>
                                     </li>
                                 </ul>
                             </div>
-                            <div v-else-if="searchQuery && !isSearching" class="mt-2 text-sm text-center text-slate-400 py-3">
+                            <div v-else-if="searchQuery && !isSearching"
+                                class="mt-2 text-sm text-center text-slate-400 py-3">
                                 Siswa tidak ditemukan.
                             </div>
                         </div>
@@ -287,30 +294,28 @@ const submitDeleteLog = () => {
                             <div v-if="!selectedClassId">
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Pilih Kelas</label>
                                 <div class="relative mb-2">
-                                    <input 
-                                        type="text" 
-                                        v-model="classPickerSearch"
-                                        placeholder="Cari kelas..." 
-                                        class="w-full border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm text-sm p-3 pl-10 transition-colors"
-                                    >
-                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    <input type="text" v-model="classPickerSearch" placeholder="Cari kelas..."
+                                        class="w-full border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm text-sm p-3 pl-10 transition-colors">
+                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                 </div>
                                 <div class="border border-slate-200 rounded-xl overflow-hidden">
                                     <ul class="max-h-56 overflow-auto divide-y divide-slate-100">
-                                        <li v-if="filteredClasses.length === 0" class="px-4 py-4 text-sm text-center text-slate-400">
+                                        <li v-if="filteredClasses.length === 0"
+                                            class="px-4 py-4 text-sm text-center text-slate-400">
                                             Kelas tidak ditemukan.
                                         </li>
-                                        <li 
-                                            v-for="cls in filteredClasses" 
-                                            :key="cls.id"
+                                        <li v-for="cls in filteredClasses" :key="cls.id"
                                             @click="selectedClassId = cls.id"
-                                            class="cursor-pointer hover:bg-blue-50 active:bg-blue-100 px-4 py-3 transition-colors flex items-center justify-between"
-                                        >
+                                            class="cursor-pointer hover:bg-blue-50 active:bg-blue-100 px-4 py-3 transition-colors flex items-center justify-between">
                                             <span class="font-semibold text-slate-800 text-sm">{{ cls.name }}</span>
-                                            <svg class="w-4 h-4 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            <svg class="w-4 h-4 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
                                             </svg>
                                         </li>
                                     </ul>
@@ -318,71 +323,88 @@ const submitDeleteLog = () => {
                             </div>
 
                             <!-- Selected class header (shown after picking) -->
-                            <div v-if="selectedClassId" class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                            <div v-if="selectedClassId"
+                                class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
                                 <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                     </svg>
-                                    <span class="font-bold text-blue-800 text-sm">{{ classes.find(c => c.id == selectedClassId)?.name }}</span>
+                                    <span class="font-bold text-blue-800 text-sm">{{classes.find(c => c.id ==
+                                        selectedClassId)?.name}}</span>
                                 </div>
-                                <button @click="selectedClassId = ''; classSearchQuery = ''; classPickerSearch = ''" class="text-blue-400 hover:text-red-500 transition-colors text-xs font-medium">
+                                <button @click="selectedClassId = ''; classSearchQuery = ''; classPickerSearch = ''"
+                                    class="text-blue-400 hover:text-red-500 transition-colors text-xs font-medium">
                                     Ganti Kelas
                                 </button>
                             </div>
-                            
+
                             <!-- Student list with search (only after class selected) -->
                             <div v-if="selectedClassId">
-                                <div v-if="isLoadingStudents" class="text-sm text-slate-500 italic p-3 text-center">Memuat siswa...</div>
+                                <div v-if="isLoadingStudents" class="text-sm text-slate-500 italic p-3 text-center">
+                                    Memuat
+                                    siswa...</div>
                                 <div v-else>
                                     <!-- Search within class -->
                                     <div class="relative mb-2">
-                                        <input 
-                                            type="text" 
-                                            v-model="classSearchQuery"
-                                            placeholder="Cari nama siswa di kelas ini..." 
-                                            class="w-full border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm text-sm p-3 pl-10 transition-colors"
-                                        >
-                                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        <input type="text" v-model="classSearchQuery"
+                                            placeholder="Cari nama siswa di kelas ini..."
+                                            class="w-full border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-xl shadow-sm text-sm p-3 pl-10 transition-colors">
+                                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3.5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
                                     </div>
                                     <!-- Scrollable student list -->
                                     <div class="border border-slate-200 rounded-xl overflow-hidden">
                                         <ul class="max-h-52 overflow-auto divide-y divide-slate-100">
-                                            <li v-if="filteredClassStudents.length === 0" class="px-4 py-4 text-sm text-center text-slate-400">
+                                            <li v-if="filteredClassStudents.length === 0"
+                                                class="px-4 py-4 text-sm text-center text-slate-400">
                                                 Tidak ada siswa ditemukan.
                                             </li>
-                                            <li 
-                                                v-for="student in filteredClassStudents" 
-                                                :key="student.id"
+                                            <li v-for="student in filteredClassStudents" :key="student.id"
                                                 @click="selectStudent(student)"
-                                                class="cursor-pointer hover:bg-blue-50 active:bg-blue-100 px-4 py-3 transition-colors flex items-center justify-between"
-                                            >
+                                                class="cursor-pointer hover:bg-blue-50 active:bg-blue-100 px-4 py-3 transition-colors flex items-center justify-between">
                                                 <div>
-                                                    <div class="font-semibold text-slate-800 text-sm">{{ student.name }}</div>
+                                                    <div class="font-semibold text-slate-800 text-sm">{{ student.name }}
+                                                    </div>
                                                     <div class="text-xs text-slate-400">{{ student.nisn }}</div>
                                                 </div>
-                                                <svg class="w-4 h-4 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                <svg class="w-4 h-4 text-slate-300 shrink-0" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M9 5l7 7-7 7" />
                                                 </svg>
                                             </li>
                                         </ul>
                                     </div>
-                                    <p class="text-xs text-slate-400 mt-1 text-right">{{ filteredClassStudents.length }} siswa</p>
+                                    <p class="text-xs text-slate-400 mt-1 text-right">{{ filteredClassStudents.length }}
+                                        siswa
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Selected Student Indicator -->
-                        <div v-if="selectedStudent" class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-100 rounded-xl flex justify-between items-center animate-fade-in shadow-sm">
+                        <div v-if="selectedStudent"
+                            class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-100 rounded-xl flex justify-between items-center animate-fade-in shadow-sm">
                             <div>
-                                <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Siswa Terpilih</div>
-                                <div class="font-black text-blue-900 text-xl leading-none">{{ selectedStudent.name }}</div>
-                                <div class="text-blue-700 text-sm font-medium mt-1">{{ selectedStudent.nisn }} &bull; Kelas {{ selectedStudent.school_class?.name }}</div>
+                                <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Siswa
+                                    Terpilih</div>
+                                <div class="font-black text-blue-900 text-xl leading-none">{{ selectedStudent.name }}
+                                </div>
+                                <div class="text-blue-700 text-sm font-medium mt-1">{{ selectedStudent.nisn }} &bull;
+                                    Kelas {{
+                                        selectedStudent.school_class?.name }}</div>
                             </div>
-                            <button @click="resetForm" class="h-10 w-10 rounded-full bg-white text-blue-400 hover:text-red-500 shadow-sm flex items-center justify-center transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            <button @click="resetForm"
+                                class="h-10 w-10 rounded-full bg-white text-blue-400 hover:text-red-500 shadow-sm flex items-center justify-center transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
@@ -391,62 +413,49 @@ const submitDeleteLog = () => {
                         <div v-if="selectedStudent" class="mb-8 animate-fade-in">
                             <label class="block text-sm font-semibold text-slate-700 mb-3">Alasan Keterlambatan</label>
                             <div class="flex flex-wrap gap-2">
-                                <button 
-                                    v-for="reason in reasons" 
-                                    :key="reason"
-                                    type="button"
-                                    @click="selectReason(reason)"
-                                    :class="[
+                                <button v-for="reason in reasons" :key="reason" type="button"
+                                    @click="selectReason(reason)" :class="[
                                         'px-4 py-2.5 rounded-lg border font-bold text-sm transition-all',
                                         form.reason === reason && !showManualReason
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105' 
+                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105'
                                             : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                                    ]"
-                                >
+                                    ]">
                                     {{ reason }}
                                 </button>
-                                <button 
-                                    type="button"
-                                    @click="toggleManualReason"
-                                    :class="[
-                                        'px-4 py-2.5 rounded-lg border font-bold text-sm transition-all',
-                                        showManualReason
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105' 
-                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                                    ]"
-                                >
+                                <button type="button" @click="toggleManualReason" :class="[
+                                    'px-4 py-2.5 rounded-lg border font-bold text-sm transition-all',
+                                    showManualReason
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                                ]">
                                     Lainnya...
                                 </button>
                             </div>
 
                             <div v-if="showManualReason" class="mt-4 animate-fade-in">
-                                <input 
-                                    type="text" 
-                                    v-model="form.reason" 
-                                    placeholder="Ketik alasan spesifik..." 
+                                <input type="text" v-model="form.reason" placeholder="Ketik alasan spesifik..."
                                     class="w-full border-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm"
-                                    autofocus
-                                >
+                                    autofocus>
                             </div>
                         </div>
 
                         <!-- Nama Guru Piket (Opsional) -->
                         <div v-if="selectedStudent" class="mb-8 animate-fade-in">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Guru Piket <span class="text-slate-400 font-normal">(Opsional)</span></label>
-                            <input 
-                                type="text" 
-                                v-model="form.reporter_name" 
-                                placeholder="Nama guru yang bertugas piket" 
-                                class="w-full border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm"
-                            >
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Guru Piket <span
+                                    class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <input type="text" v-model="form.reporter_name" placeholder="Nama guru yang bertugas piket"
+                                class="w-full border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm">
                         </div>
 
                         <!-- 3. Submit Button -->
-                        <div v-if="form.errors.student_id" class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <div v-if="form.errors.student_id"
+                            class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
                                 </div>
                                 <div class="ml-3">
@@ -455,12 +464,8 @@ const submitDeleteLog = () => {
                             </div>
                         </div>
 
-                        <button 
-                            v-if="selectedStudent"
-                            @click="submitForm"
-                            :disabled="form.processing || !form.reason"
-                            class="w-full bg-gradient-to-r from-blue-600 to-blue-600 text-white font-black text-lg py-4 rounded-xl shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center"
-                        >
+                        <button v-if="selectedStudent" @click="submitForm" :disabled="form.processing || !form.reason"
+                            class="w-full bg-gradient-to-r from-blue-600 to-blue-600 text-white font-black text-lg py-4 rounded-xl shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center">
                             {{ form.processing ? 'Memproses...' : 'SIMPAN' }}
                         </button>
                     </div>
@@ -468,67 +473,91 @@ const submitDeleteLog = () => {
 
                 <!-- Log Panel (Right) -->
                 <div class="lg:col-span-7">
-                    <div class="bg-white overflow-hidden shadow-sm border border-slate-200 rounded-2xl h-full flex flex-col">
-                        <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between md:items-center bg-slate-50 gap-4">
+                    <div
+                        class="bg-white overflow-hidden shadow-sm border border-slate-200 rounded-2xl h-full flex flex-col">
+                        <div
+                            class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between md:items-center bg-slate-50 gap-4">
                             <div>
                                 <h3 class="font-bold text-xl text-slate-800">Log Hari Ini</h3>
                                 <p class="text-sm text-slate-500 mt-1">Daftar siswa terlambat real-time</p>
                             </div>
                             <div class="flex items-center space-x-3">
                                 <div class="relative">
-                                    <input 
-                                        type="text" 
-                                        v-model="logSearchQuery" 
-                                        placeholder="Cari siswa/kelas..." 
-                                        class="w-full sm:w-64 text-sm border-slate-200 bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm py-2 pl-9 pr-3 transition-colors"
-                                    >
-                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    <input type="text" v-model="logSearchQuery" placeholder="Cari siswa/kelas..."
+                                        class="w-full sm:w-64 text-sm border-slate-200 bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm py-2 pl-9 pr-3 transition-colors">
+                                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                 </div>
-                                <div class="bg-blue-100 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-sm whitespace-nowrap">
-                                    {{ filteredTodayLogs.length }} Siswa
+                                <div
+                                    class="bg-blue-100 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-sm whitespace-nowrap shadow-sm">
+                                    Jumlah: {{ filteredTodayLogs.length }} Siswa
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="overflow-x-auto flex-1 p-0">
                             <table class="min-w-full divide-y divide-slate-100">
                                 <thead class="bg-white sticky top-0 z-10 shadow-sm">
                                     <tr>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Siswa & Kelas</th>
-                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Waktu & Status</th>
-                                        <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            Siswa & Kelas</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            Waktu & Status</th>
+                                        <th
+                                            class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-slate-100">
-                                    <tr v-for="log in filteredTodayLogs" :key="log.id" class="hover:bg-slate-50 transition-colors">
+                                    <tr v-for="log in filteredTodayLogs" :key="log.id"
+                                        class="hover:bg-slate-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="font-bold text-slate-900">{{ log.student?.name }}</div>
-                                            <div class="text-sm font-medium text-slate-500">{{ log.student?.school_class?.name }} &bull; {{ log.reason }}</div>
+                                            <div class="text-sm font-medium text-slate-500">{{
+                                                log.student?.school_class?.name
+                                            }} &bull; {{ log.reason }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-bold text-slate-900 mb-1">{{ new Date(log.delay_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}</div>
-                                            <span :class="['px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded border', getWarningBadge(log.student?.active_delay_logs_count).class]">
+                                            <div class="text-sm font-bold text-slate-900 mb-1">{{ new
+                                                Date(log.delay_time).toLocaleTimeString('id-ID', {
+                                                    hour: '2-digit',
+                                                    minute:
+                                                        '2-digit'
+                                                }) }}</div>
+                                            <span
+                                                :class="['px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded border', getWarningBadge(log.student?.active_delay_logs_count).class]">
                                                 {{ getWarningBadge(log.student?.active_delay_logs_count).text }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
-                                            <button @click="viewPastTicket(log)" class="text-blue-600 hover:text-blue-900 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                            <button @click="viewPastTicket(log)"
+                                                class="text-blue-600 hover:text-blue-900 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
                                                 Tiket
                                             </button>
-                                            <button @click="openEditLog(log)" class="text-yellow-600 hover:text-yellow-900 font-bold text-sm bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded-lg transition-colors">
+                                            <button @click="openEditLog(log)"
+                                                class="text-yellow-600 hover:text-yellow-900 font-bold text-sm bg-yellow-50 hover:bg-yellow-100 px-3 py-1.5 rounded-lg transition-colors">
                                                 Edit
                                             </button>
-                                            <button @click="openDeleteLog(log)" class="text-red-600 hover:text-red-900 font-bold text-sm bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+                                            <button @click="openDeleteLog(log)"
+                                                class="text-red-600 hover:text-red-900 font-bold text-sm bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
                                                 Hapus
                                             </button>
                                         </td>
                                     </tr>
                                     <tr v-if="filteredTodayLogs.length === 0">
                                         <td colspan="3" class="px-6 py-12 text-center">
-                                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
-                                                <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                            <div
+                                                class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                                                <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
                                             </div>
                                             <p class="text-slate-500 font-medium">
                                                 {{ logSearchQuery ? 'Pencarian tidak ditemukan.' : 'Belum ada siswa terlambat hari ini. Luar biasa!' }}
@@ -545,7 +574,8 @@ const submitDeleteLog = () => {
 
         <!-- 4. Digital Ticket Modal -->
         <Teleport to="body">
-            <div v-if="$page.props.flash.ticket || viewingTicket" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+            <div v-if="$page.props.flash.ticket || viewingTicket"
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
                 <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-bounce-in relative">
                     <!-- Header -->
                     <div class="bg-red-600 p-6 text-center text-white relative overflow-hidden">
@@ -554,46 +584,71 @@ const submitDeleteLog = () => {
                         <h2 class="text-3xl font-black tracking-widest uppercase relative z-10">TIKET MASUK</h2>
                         <p class="text-red-100 font-medium mt-1 relative z-10">Izin Keterlambatan</p>
                     </div>
-                    
+
                     <!-- Ticket Content -->
                     <div class="p-5 md:p-6">
                         <div class="text-center mb-4 flex flex-col items-center justify-center">
                             <img src="/images/logo.png" alt="Logo SMK" class="h-14 w-auto object-contain mb-2">
-                            <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">SMK Negeri 5 Telkom Banda Aceh</div>
+                            <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">SMK Negeri 5
+                                Telkom
+                                Banda Aceh</div>
                         </div>
 
                         <div class="space-y-3">
                             <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Siswa</div>
-                                <div class="text-lg font-black text-slate-900 leading-tight">{{ ($page.props.flash.ticket || viewingTicket).student?.name }}</div>
-                                <div class="text-xs font-medium text-slate-500">{{ ($page.props.flash.ticket || viewingTicket).student?.nisn }} &bull; Kelas {{ ($page.props.flash.ticket || viewingTicket).student?.school_class?.name }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Siswa
+                                </div>
+                                <div class="text-lg font-black text-slate-900 leading-tight">{{
+                                    ($page.props.flash.ticket ||
+                                        viewingTicket).student?.name }}</div>
+                                <div class="text-xs font-medium text-slate-500">{{ ($page.props.flash.ticket ||
+                                    viewingTicket).student?.nisn }} &bull; Kelas {{ ($page.props.flash.ticket ||
+                                        viewingTicket).student?.school_class?.name }}</div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tanggal</div>
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                        Tanggal
+                                    </div>
                                     <div class="font-bold text-slate-800 text-sm">
-                                        {{ new Date(($page.props.flash.ticket || viewingTicket).delay_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                                        {{ new Date(($page.props.flash.ticket ||
+                                            viewingTicket).delay_time).toLocaleDateString('id-ID', {
+                                                day: 'numeric', month:
+                                                    'short',
+                                                year: 'numeric'
+                                            }) }}
                                     </div>
                                 </div>
                                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Alasan</div>
-                                    <div class="font-bold text-slate-800 text-sm truncate" :title="($page.props.flash.ticket || viewingTicket).reason">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                        Alasan
+                                    </div>
+                                    <div class="font-bold text-slate-800 text-sm truncate"
+                                        :title="($page.props.flash.ticket || viewingTicket).reason">
                                         {{ ($page.props.flash.ticket || viewingTicket).reason }}
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Signature & Stamp -->
-                            <div class="mt-4 border-t border-dashed border-slate-200 pt-4 flex justify-between items-end">
+                            <div
+                                class="mt-4 border-t border-dashed border-slate-200 pt-4 flex justify-between items-end">
                                 <div class="text-left">
-                                    <div class="w-12 h-12 border-[3px] border-red-500/30 rounded-full flex items-center justify-center transform -rotate-12 relative">
-                                        <span class="text-red-500/50 font-black text-[8px] uppercase transform rotate-12 text-center leading-tight tracking-widest">SMKN 5<br>VALID</span>
+                                    <div
+                                        class="w-12 h-12 border-[3px] border-red-500/30 rounded-full flex items-center justify-center transform -rotate-12 relative">
+                                        <span
+                                            class="text-red-500/50 font-black text-[8px] uppercase transform rotate-12 text-center leading-tight tracking-widest">SMKN
+                                            5<br>VALID</span>
                                     </div>
                                 </div>
                                 <div class="text-right flex flex-col items-end">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">Guru Piket</div>
-                                    <div class="font-bold text-slate-800 border-b-2 border-slate-800 pb-0.5 inline-block text-sm">{{ $page.props.auth.user.name }}</div>
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">Guru
+                                        Piket
+                                    </div>
+                                    <div
+                                        class="font-bold text-slate-800 border-b-2 border-slate-800 pb-0.5 inline-block text-sm">
+                                        {{ $page.props.auth.user.name }}</div>
                                 </div>
                             </div>
                         </div>
@@ -601,10 +656,8 @@ const submitDeleteLog = () => {
 
                     <!-- Footer Action -->
                     <div class="p-6 bg-white border-t border-slate-100">
-                        <button 
-                            @click="closeTicket"
-                            class="w-full bg-slate-900 text-white font-black text-lg py-4 rounded-xl hover:bg-slate-800 transition-colors shadow-xl shadow-slate-200"
-                        >
+                        <button @click="closeTicket"
+                            class="w-full bg-slate-900 text-white font-black text-lg py-4 rounded-xl hover:bg-slate-800 transition-colors shadow-xl shadow-slate-200">
                             TUTUP
                         </button>
                     </div>
@@ -613,38 +666,55 @@ const submitDeleteLog = () => {
         </Teleport>
 
         <!-- Edit Log Modal -->
-        <div v-if="showEditLogModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+        <div v-if="showEditLogModal"
+            class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
             <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6">
                 <h3 class="text-xl font-bold text-slate-800 mb-4">Edit Log Keterlambatan</h3>
-                <p class="text-sm text-slate-500 mb-4">Siswa: <strong>{{ logToEdit?.student?.name }}</strong>. Jika Anda salah memilih siswa, silakan Hapus log ini dan buat baru.</p>
+                <p class="text-sm text-slate-500 mb-4">Siswa: <strong>{{ logToEdit?.student?.name }}</strong>. Jika Anda
+                    salah
+                    memilih siswa, silakan Hapus log ini dan buat baru.</p>
                 <form @submit.prevent="submitEditLog" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Alasan Keterlambatan</label>
-                        <input type="text" v-model="editLogForm.reason" class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500" required>
-                        <p v-if="editLogForm.errors.reason" class="mt-1 text-sm text-red-600">{{ editLogForm.errors.reason }}</p>
+                        <input type="text" v-model="editLogForm.reason"
+                            class="w-full rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                            required>
+                        <p v-if="editLogForm.errors.reason" class="mt-1 text-sm text-red-600">{{
+                            editLogForm.errors.reason }}
+                        </p>
                     </div>
                     <div class="pt-4 flex justify-end space-x-3">
-                        <button type="button" @click="showEditLogModal = false" class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Batal</button>
-                        <button type="submit" :disabled="editLogForm.processing" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700 disabled:opacity-50">Simpan Perubahan</button>
+                        <button type="button" @click="showEditLogModal = false"
+                            class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Batal</button>
+                        <button type="submit" :disabled="editLogForm.processing"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700 disabled:opacity-50">Simpan
+                            Perubahan</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Delete Log Modal -->
-        <div v-if="showDeleteLogModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+        <div v-if="showDeleteLogModal"
+            class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
             <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
                 <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                 </div>
                 <h3 class="text-xl font-bold text-slate-800 mb-2">Hapus Log Keterlambatan?</h3>
-                <p class="text-sm text-slate-500 mb-6">Log atas nama <strong>{{ logToDelete?.student?.name }}</strong> akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.</p>
-                
+                <p class="text-sm text-slate-500 mb-6">Log atas nama <strong>{{ logToDelete?.student?.name }}</strong>
+                    akan
+                    dihapus permanen. Tindakan ini tidak bisa dibatalkan.</p>
+
                 <div class="flex justify-center space-x-3">
-                    <button @click="showDeleteLogModal = false" class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                    <button @click="submitDeleteLog" :disabled="deleteLogForm.processing" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-red-700 disabled:opacity-50 transition-colors">Ya, Hapus</button>
+                    <button @click="showDeleteLogModal = false"
+                        class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
+                    <button @click="submitDeleteLog" :disabled="deleteLogForm.processing"
+                        class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-red-700 disabled:opacity-50 transition-colors">Ya,
+                        Hapus</button>
                 </div>
             </div>
         </div>
@@ -654,10 +724,21 @@ const submitDeleteLog = () => {
 
 <style scoped>
 @keyframes bounce-in {
-    0% { transform: scale(0.9); opacity: 0; }
-    50% { transform: scale(1.02); opacity: 1; }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.02);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
+
 .animate-bounce-in {
     animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
