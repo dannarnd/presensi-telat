@@ -16,7 +16,7 @@ class GuruBKController extends Controller
         }])
             ->where('status', 'active')
             ->withCount('activeDelayLogs')
-            ->having('active_delay_logs_count', '>', 0)
+            ->has('activeDelayLogs', '>', 0)
             ->orderBy('active_delay_logs_count', 'desc')
             ->get();
 
