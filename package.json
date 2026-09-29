@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "echo 'Skipping Vercel frontend build. Assets are pre-built.'",
         "dev": "vite"
     },
     "devDependencies": {
