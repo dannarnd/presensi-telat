@@ -606,28 +606,26 @@ const submitDeleteLog = () => {
                                         viewingTicket).student?.school_class?.name }}</div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                                        Tanggal
-                                    </div>
-                                    <div class="font-bold text-slate-800 text-sm">
-                                        {{ new Date(($page.props.flash.ticket ||
-                                            viewingTicket).delay_time).toLocaleDateString('id-ID', {
-                                                day: 'numeric', month:
-                                                    'short',
-                                                year: 'numeric'
-                                            }) }}
-                                    </div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                    Tanggal
                                 </div>
-                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                                        Alasan
-                                    </div>
-                                    <div class="font-bold text-slate-800 text-sm truncate"
-                                        :title="($page.props.flash.ticket || viewingTicket).reason">
-                                        {{ ($page.props.flash.ticket || viewingTicket).reason }}
-                                    </div>
+                                <div class="font-bold text-slate-800 text-sm">
+                                    {{ new Date(($page.props.flash.ticket ||
+                                        viewingTicket).delay_time).toLocaleDateString('id-ID', {
+                                            day: 'numeric', month:
+                                                'short',
+                                            year: 'numeric'
+                                        }) }}
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                                    Alasan
+                                </div>
+                                <div class="font-bold text-slate-800 text-sm break-words whitespace-normal leading-snug"
+                                    :title="($page.props.flash.ticket || viewingTicket).reason">
+                                    {{ ($page.props.flash.ticket || viewingTicket).reason }}
                                 </div>
                             </div>
 
@@ -648,7 +646,7 @@ const submitDeleteLog = () => {
                                     </div>
                                     <div
                                         class="font-bold text-slate-800 border-b-2 border-slate-800 pb-0.5 inline-block text-sm">
-                                        {{ $page.props.auth.user.name }}</div>
+                                        {{ ($page.props.flash.ticket || viewingTicket).reporter_name || 'Guru Piket' }}</div>
                                 </div>
                             </div>
                         </div>
