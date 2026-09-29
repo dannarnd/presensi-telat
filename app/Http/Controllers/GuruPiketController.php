@@ -47,8 +47,8 @@ class GuruPiketController extends Controller
             ->withCount('activeDelayLogs')
             ->where('status', 'active')
             ->where(function($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('nisn', 'like', "%{$query}%");
+                $q->where('name', 'ilike', "%{$query}%")
+                  ->orWhere('nisn', 'ilike', "%{$query}%");
             })
             ->limit(10)
             ->get();
