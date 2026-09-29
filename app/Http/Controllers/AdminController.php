@@ -63,29 +63,7 @@ class AdminController extends Controller
 
     public function backupDatabase()
     {
-        $hari = \Carbon\Carbon::now()->isoFormat('dddd');
-        $tanggal = \Carbon\Carbon::now()->isoFormat('D_MMM_Y');
-        $jam = \Carbon\Carbon::now()->format('H_i');
-        
-        $filename = "Database_Full_{$hari}_{$tanggal}_Jam_{$jam}.sql";
-        $tempPath = storage_path('app/' . $filename);
-
-        $dbName = env('DB_DATABASE', 'presensi_telat');
-        $dbUser = env('DB_USERNAME', 'root');
-        $dbPass = env('DB_PASSWORD', '');
-
-        $passwordStr = $dbPass ? "-p\"{$dbPass}\"" : "";
-        
-        // Use mysqldump (assumed to be in PATH for Laragon)
-        $command = "mysqldump -u {$dbUser} {$passwordStr} {$dbName} > \"{$tempPath}\"";
-        
-        exec($command, $output, $returnVar);
-
-        if ($returnVar !== 0) {
-            return back()->with('error', 'Gagal membackup database SQL. Pastikan mysqldump tersedia di server.');
-        }
-
-        return response()->download($tempPath)->deleteFileAfterSend(true);
+        return back()->with('error', 'Fitur ini dinonaktifkan di versi Online (Vercel). Database Anda sekarang menggunakan Supabase (PostgreSQL). Silakan buka Dashboard Supabase Anda untuk melakukan backup database yang jauh lebih aman dan otomatis.');
     }
 
     public function users()
