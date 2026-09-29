@@ -650,6 +650,9 @@ const submitDeleteLog = () => {
                                 </div>
                             </div>
                         </div>
+                        <div class="text-center mt-3">
+                            <span class="text-[8px] text-slate-300 font-bold tracking-[0.2em] uppercase">PPKPMUINARRANIRY2026</span>
+                        </div>
                     </div>
 
                     <!-- Footer Action -->
