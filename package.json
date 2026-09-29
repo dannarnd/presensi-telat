@@ -3,8 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "echo 'Skipping Vercel frontend build. Assets are pre-built.'",
-        "dev": "vite"
+        "dev": "vite",
+        "local-build": "vite build"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",
