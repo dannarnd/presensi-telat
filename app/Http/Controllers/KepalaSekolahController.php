@@ -105,7 +105,7 @@ class KepalaSekolahController extends Controller
         // 5. Trend (Bar Chart)
         $trendDataRaw = (clone $query)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(id) as count'))
-            ->groupBy('date')
+            ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
             ->get();
 
