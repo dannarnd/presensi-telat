@@ -102,20 +102,7 @@ const getWarningBadge = (count) => {
                         </div>
                     </a>
 
-                    <!-- Backup Database Full SQL -->
-                    <a :href="route('admin.backup_database')" class="group bg-white/5 hover:bg-blue-600 border border-white/10 hover:border-blue-500 rounded-xl p-5 flex items-start space-x-4 transition-all duration-200 cursor-pointer no-underline">
-                        <div class="h-12 w-12 rounded-xl bg-blue-500/20 group-hover:bg-white/20 flex items-center justify-center shrink-0 transition-colors">
-                            <svg class="w-6 h-6 text-blue-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                            </svg>
-                        </div>
-                        <div>
-                            <div class="font-bold text-white">Backup Database Penuh</div>
-                            <div class="text-sm text-slate-400 group-hover:text-blue-100 mt-1">
-                                Download <span class="font-bold text-blue-400 group-hover:text-white">seluruh database SQL</span> — akun pengguna, kelas, siswa, semua log keterlambatan, konseling, dan lainnya.
-                            </div>
-                        </div>
-                    </a>
+
                 </div>
                 <p class="text-xs text-slate-500 mt-4">📌 Nama file otomatis menyertakan hari, tanggal, dan jam saat backup dilakukan.</p>
             </div>
