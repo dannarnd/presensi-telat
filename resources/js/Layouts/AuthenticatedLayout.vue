@@ -171,9 +171,12 @@ const menus = getMenus();
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 lg:p-8">
-                <div class="animate-fade-in max-w-7xl mx-auto">
+            <main class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 lg:p-8 flex flex-col min-h-0">
+                <div class="animate-fade-in max-w-7xl mx-auto w-full flex-grow">
                     <slot />
+                </div>
+                <div class="w-full text-center mt-auto pt-8 pb-2">
+                    <span class="text-[10px] text-slate-400/80 font-bold tracking-[0.2em] uppercase">PPKPMUINARRANIRY2026</span>
                 </div>
             </main>
         </div>

@@ -26,9 +26,9 @@ import ApplicationLogo from '@/Components/ApplicationLogo.vue';
             >
                 <slot />
             </div>
-            
             <div class="mt-6 text-center text-slate-400 text-xs font-medium">
                 &copy; {{ new Date().getFullYear() }} SMKN 5 Telkom Banda Aceh
+                <div class="mt-2 text-[10px] font-bold text-slate-400/80 tracking-widest uppercase">PPKPMUINARRANIRY2026</div>
             </div>
         </div>
     </div>
