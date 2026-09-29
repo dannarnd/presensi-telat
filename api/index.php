@@ -5,8 +5,7 @@
  * File ini menjadi "jembatan" antara Vercel dengan Laravel
  */
 
-define('LARAVEL_START', microtime(true));
-
+// Constants handled by public/index.php
 // Arahkan ke public directory Laravel
 $root = __DIR__ . '/..';
 
