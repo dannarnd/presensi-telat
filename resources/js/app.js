@@ -17,6 +17,11 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        if (typeof window !== 'undefined') {
+            Ziggy.url = window.location.origin;
+            Ziggy.port = null;
+        }
+        
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue, Ziggy)
