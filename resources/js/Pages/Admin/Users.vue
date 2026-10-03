@@ -192,6 +192,7 @@ const submitDeleteUser = () => {
                                 <option value="admin">Admin</option>
                                 <option value="guru_piket">Guru Piket</option>
                                 <option value="wali_kelas">Wali Kelas</option>
+                                <option value="guru_bk">Guru BK</option>
                                 <option value="kepala_sekolah">Kepala Sekolah</option>
                             </select>
                             <p v-if="userForm.errors.role" class="mt-1 text-sm text-red-600">{{ userForm.errors.role }}</p>
@@ -253,8 +254,8 @@ const submitDeleteUser = () => {
                                 <option value="admin">Admin</option>
                                 <option value="guru_piket">Guru Piket</option>
                                 <option value="wali_kelas">Wali Kelas</option>
-                                <option value="kepala_sekolah">Kepala Sekolah</option>
                                 <option value="guru_bk">Guru BK</option>
+                                <option value="kepala_sekolah">Kepala Sekolah</option>
                             </select>
                             <p v-if="editUserForm.errors.role" class="mt-1 text-sm text-red-600">{{ editUserForm.errors.role }}</p>
                         </div>
