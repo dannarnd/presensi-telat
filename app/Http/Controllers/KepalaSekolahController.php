@@ -54,8 +54,8 @@ class KepalaSekolahController extends Controller
         $prevQuery = DelayLog::whereBetween('created_at', [$prevStartDate, $prevEndDate]);
 
         // 1. Total Lates (Sekarang menghitung total siswa yang terlambat, bukan total kejadian)
-        $totalLates = (clone $query)->distinct('student_id')->count('student_id');
-        $prevTotalLates = (clone $prevQuery)->distinct('student_id')->count('student_id');
+        $totalLates = (clone $query)->distinct()->count('student_id');
+        $prevTotalLates = (clone $prevQuery)->distinct()->count('student_id');
 
         // 2. MoM Trend
         $momPercentage = 0;
