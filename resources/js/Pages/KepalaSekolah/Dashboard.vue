@@ -92,12 +92,13 @@ const showDetailModal = ref(false);
 const selectedStudentDetail = ref(null);
 const isLoadingDetail = ref(false);
 
-const openDetail = async (studentId) => {
+const openDetail = async (student) => {
+    selectedStudentDetail.value = student; // Pass full object so header renders immediately
     isLoadingDetail.value = true;
     showDetailModal.value = true;
-    selectedStudentDetail.value = null;
+    
     try {
-        const response = await axios.get('/laporan/' + studentId);
+        const response = await axios.get(route('laporan.show', student.id));
         selectedStudentDetail.value = response.data;
     } catch (error) {
         console.error("Failed to load student details", error);
@@ -236,7 +237,7 @@ const openDetail = async (studentId) => {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <button @click="openDetail(student.id)" class="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                        <button @click="openDetail(student)" class="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
                                             Lihat Detail
                                         </button>
                                     </td>
@@ -283,7 +284,7 @@ const openDetail = async (studentId) => {
                         <div v-if="isLoadingDetail" class="text-center py-10">
                             <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         </div>
-                        <div v-else-if="selectedStudentDetail && selectedStudentDetail.delay_logs" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                        <div v-else-if="selectedStudentDetail && selectedStudentDetail.delay_logs && selectedStudentDetail.delay_logs.length > 0" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
                             <div v-for="log in selectedStudentDetail.delay_logs" :key="log.id" class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                 <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-blue-100 text-blue-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -299,6 +300,9 @@ const openDetail = async (studentId) => {
                                     <div class="text-slate-500 text-xs mt-1 font-medium italic" v-if="log.reporter_name">Petugas: {{ log.reporter_name }}</div>
                                 </div>
                             </div>
+                        </div>
+                        <div v-else-if="selectedStudentDetail && selectedStudentDetail.delay_logs && selectedStudentDetail.delay_logs.length === 0" class="text-center py-10 text-gray-500">
+                            Tidak ada data keterlambatan yang valid untuk ditampilkan.
                         </div>
                     </div>
                 </div>
