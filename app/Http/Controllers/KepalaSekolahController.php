@@ -120,7 +120,7 @@ class KepalaSekolahController extends Controller
         $wallOfShame = DB::table('delay_logs')
             ->join('students', 'delay_logs.student_id', '=', 'students.id')
             ->join('school_classes', 'students.school_class_id', '=', 'school_classes.id')
-            ->select('students.name', 'students.nisn', 'school_classes.name as class_name', DB::raw('COUNT(delay_logs.id) as total_late'))
+            ->select('students.id', 'students.name', 'students.nisn', 'school_classes.name as class_name', DB::raw('COUNT(delay_logs.id) as total_late'))
             ->whereBetween('delay_logs.created_at', [$startDate, $endDate])
             ->groupBy('students.id', 'students.name', 'students.nisn', 'school_classes.name')
             ->orderByDesc('total_late')
