@@ -10,24 +10,39 @@ use Inertia\Inertia;
 
 class WaliKelasController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         
-        // Find the classes this wali kelas manages
-        $classes = SchoolClass::where('wali_kelas_id', $user->id)->pluck('id');
+        $isAdmin = $user->role === 'admin';
+        
+        // Find the classes this wali kelas manages or all classes if admin
+        $classQuery = SchoolClass::query();
+        if (!$isAdmin) {
+            $classQuery->where('wali_kelas_id', $user->id);
+        }
+        $availableClasses = $classQuery->get();
+        $classIds = $availableClasses->pluck('id');
+        
+        $selectedClassId = $request->query('class_id');
+        if ($isAdmin && $selectedClassId) {
+            $classIds = collect([$selectedClassId]);
+        }
         
         $students = Student::with(['schoolClass', 'delayLogs' => function($q) {
                 $q->orderBy('delay_time', 'desc');
             }])
             ->withCount('delayLogs')
-            ->whereIn('school_class_id', $classes)
+            ->whereIn('school_class_id', $classIds)
             ->whereHas('delayLogs') // Hanya tampilkan yang pernah telat
             ->orderBy('name')
             ->get();
 
         return Inertia::render('WaliKelas/Dashboard', [
-            'students' => $students
+            'students' => $students,
+            'isAdmin' => $isAdmin,
+            'availableClasses' => $availableClasses,
+            'selectedClassId' => $selectedClassId
         ]);
     }
 }

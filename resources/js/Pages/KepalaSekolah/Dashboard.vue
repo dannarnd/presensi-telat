@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Bar, Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement } from 'chart.js';
@@ -123,7 +123,7 @@ const doughnutChartOptions = {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Metric 1 -->
                     <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 relative overflow-hidden">
-                        <div class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Keterlambatan</div>
+                        <div class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Siswa Terlambat</div>
                         <div class="text-4xl font-black text-gray-900 flex items-center gap-3">
                             {{ totalLates }}
                             <span v-if="momPercentage > 0" :class="['text-sm px-2 py-1 rounded font-bold flex items-center', momTrend === 'up' ? 'bg-red-100 text-red-700' : (momTrend === 'down' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700')]">
@@ -194,6 +194,7 @@ const doughnutChartOptions = {
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Siswa</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Kelas</th>
                                     <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Total Telat</th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
@@ -215,9 +216,14 @@ const doughnutChartOptions = {
                                             {{ student.total_late }}x
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <Link :href="route('laporan.index', { search: student.nisn })" class="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                            Lihat Detail
+                                        </Link>
+                                    </td>
                                 </tr>
                                 <tr v-if="wallOfShame.length === 0">
-                                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
                                         Belum ada data keterlambatan pada periode ini.
                                     </td>
                                 </tr>

@@ -4,6 +4,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
     students: Array,
+    isAdmin: Boolean,
+    availableClasses: Array,
+    selectedClassId: [String, Number],
 });
 
 const searchQuery = ref('');
@@ -15,6 +18,12 @@ const filteredStudents = computed(() => {
         student.nisn.toLowerCase().includes(q)
     );
 });
+
+import { router } from '@inertiajs/vue3';
+
+const onClassChange = (event) => {
+    router.get(route('wali_kelas.dashboard'), { class_id: event.target.value }, { preserveState: true });
+};
 
 // Fungsi ini meng-generate pesan WA (ini adalah file yang Anda cari)
 const generateWaLink = (student) => {
@@ -95,6 +104,10 @@ const openDetail = (student) => {
                         <h3 class="text-xl font-bold text-slate-800">Daftar Anak Bimbingan (Yang Pernah Telat)</h3>
                     </div>
                     <div class="flex items-center space-x-3">
+                        <select v-if="isAdmin" @change="onClassChange" :value="selectedClassId" class="w-full sm:w-48 text-sm border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm py-2 transition-colors">
+                            <option value="">-- Semua Kelas --</option>
+                            <option v-for="c in availableClasses" :key="c.id" :value="c.id">{{ c.name }}</option>
+                        </select>
                         <div class="relative">
                             <input type="text" v-model="searchQuery" placeholder="Cari siswa atau NISN..."
                                 class="w-full sm:w-64 text-sm border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm py-2 pl-9 pr-3 transition-colors">

@@ -667,7 +667,8 @@ const submitDeleteLog = () => {
         </Teleport>
 
         <!-- Edit Log Modal -->
-        <div v-if="showEditLogModal"
+        <Teleport to="body">
+            <div v-if="showEditLogModal"
             class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
             <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6">
                 <h3 class="text-xl font-bold text-slate-800 mb-4">Edit Log Keterlambatan</h3>
@@ -719,6 +720,7 @@ const submitDeleteLog = () => {
                 </div>
             </div>
         </div>
+        </Teleport>
 
     </AuthenticatedLayout>
 </template>
