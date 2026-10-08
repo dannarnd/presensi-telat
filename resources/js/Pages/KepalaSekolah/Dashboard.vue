@@ -4,6 +4,7 @@ import { router, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Bar, Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement } from 'chart.js';
+import axios from 'axios';
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement);
 
@@ -84,6 +85,24 @@ const doughnutChartOptions = {
     maintainAspectRatio: false,
     plugins: {
         legend: { position: 'right' }
+    }
+};
+
+const showDetailModal = ref(false);
+const selectedStudentDetail = ref(null);
+const isLoadingDetail = ref(false);
+
+const openDetail = async (studentId) => {
+    isLoadingDetail.value = true;
+    showDetailModal.value = true;
+    selectedStudentDetail.value = null;
+    try {
+        const response = await axios.get('/laporan/' + studentId);
+        selectedStudentDetail.value = response.data;
+    } catch (error) {
+        console.error("Failed to load student details", error);
+    } finally {
+        isLoadingDetail.value = false;
     }
 };
 </script>
@@ -217,9 +236,9 @@ const doughnutChartOptions = {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <Link :href="route('laporan.index', { search: student.nisn })" class="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                        <button @click="openDetail(student.id)" class="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
                                             Lihat Detail
-                                        </Link>
+                                        </button>
                                     </td>
                                 </tr>
                                 <tr v-if="wallOfShame.length === 0">
@@ -237,5 +256,71 @@ const doughnutChartOptions = {
         
         <!-- Hidden iframe for direct printing -->
         <iframe v-if="printUrl" :src="printUrl" class="absolute w-0 h-0 border-0 invisible"></iframe>
+
+        <!-- Detail Modal -->
+        <Teleport to="body">
+            <div v-if="showDetailModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+                <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center sticky top-0">
+                        <div class="flex items-center space-x-4">
+                            <img src="/images/logo.png" alt="Logo SMK" class="h-12 w-auto object-contain">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800">
+                                    <span v-if="isLoadingDetail">Memuat...</span>
+                                    <span v-else-if="selectedStudentDetail">{{ selectedStudentDetail.name }}</span>
+                                </h3>
+                                <p class="text-sm text-slate-500 font-medium">Riwayat Keterlambatan</p>
+                            </div>
+                        </div>
+                        <button @click="showDetailModal = false" class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow-md transition-all">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="p-6 overflow-y-auto flex-1 bg-slate-50/50">
+                        <div v-if="isLoadingDetail" class="text-center py-10">
+                            <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        </div>
+                        <div v-else-if="selectedStudentDetail && selectedStudentDetail.delay_logs" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                            <div v-for="log in selectedStudentDetail.delay_logs" :key="log.id" class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-blue-100 text-blue-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-1">
+                                        <div class="font-bold text-slate-800">{{ new Date(log.delay_time).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</div>
+                                        <div class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{{ new Date(log.delay_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}</div>
+                                    </div>
+                                    <div class="text-slate-600 text-sm">Alasan: <strong>{{ log.reason }}</strong></div>
+                                    <div class="text-slate-500 text-xs mt-1 font-medium italic" v-if="log.reporter_name">Petugas: {{ log.reporter_name }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+</style>

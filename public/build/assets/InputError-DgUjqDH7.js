@@ -1,0 +1,1 @@
+import{F as e,O as t,U as n,g as r,u as i,y as a}from"./app-DcF1cOfo.js";var o={class:`text-sm text-red-600`},s={__name:`InputError`,props:{message:{type:String}},setup(s){return(c,l)=>e((t(),a(`div`,null,[r(`p`,o,n(s.message),1)],512)),[[i,s.message]])}};export{s as t};
