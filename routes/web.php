@@ -13,6 +13,19 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/pantau', function () {
+    $today = \Carbon\Carbon::today();
+    
+    $todayLogs = \App\Models\DelayLog::with(['student.schoolClass', 'reporter'])
+        ->whereDate('delay_time', $today)
+        ->orderBy('delay_time', 'desc')
+        ->get();
+        
+    return Inertia::render('Pantau', [
+        'todayLogs' => $todayLogs,
+    ]);
+})->name('pantau');
+
 Route::get('/dashboard', function () {
     $role = auth()->user()->role;
     return match($role) {

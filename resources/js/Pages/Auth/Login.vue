@@ -112,9 +112,21 @@ const submit = () => {
                 </button>
             </div>
 
-            <div class="mt-6 text-center border-t border-slate-100 pt-4">
-                <p class="text-sm text-slate-500">
-                    Belum punya akun? <br class="sm:hidden">
+            <!-- Monitor Button for Subject Teachers -->
+            <div class="mt-4 pt-4 border-t border-slate-100">
+                <Link href="/pantau"
+                    class="w-full flex justify-center items-center py-3 px-4 border-2 border-emerald-500 rounded-xl shadow-sm text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transform transition-all hover:scale-[1.02]">
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Monitor Keterlambatan (Guru Mapel)
+                </Link>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="text-xs text-slate-500">
+                    Belum punya akun? 
                     <span class="font-semibold text-slate-700">Hubungi Admin Sekolah</span>
                 </p>
             </div>
