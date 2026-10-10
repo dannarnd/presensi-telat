@@ -21,8 +21,11 @@ Route::get('/pantau', function () {
         ->orderBy('delay_time', 'desc')
         ->get();
         
+    $classes = \App\Models\SchoolClass::orderBy('name')->get();
+        
     return Inertia::render('Pantau', [
         'todayLogs' => $todayLogs,
+        'classes' => $classes,
     ]);
 })->name('pantau');
 

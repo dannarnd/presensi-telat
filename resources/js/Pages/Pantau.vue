@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     todayLogs: Array,
+    classes: Array,
 });
 
 // Auto-refresh mechanism
@@ -27,13 +28,20 @@ setInterval(() => {
 }, 1000);
 
 const searchQuery = ref('');
+const selectedClass = ref('');
 
 // Group by Class
 const groupedLogs = computed(() => {
     const groups = {};
     props.todayLogs.forEach(log => {
         const className = log.student?.school_class?.name || 'Lainnya';
-        // Filter search
+        
+        // Filter dropdown kelas
+        if (selectedClass.value && className !== selectedClass.value) {
+            return; // Skip jika kelas tidak cocok dengan pilihan dropdown
+        }
+        
+        // Filter search text
         const studentName = log.student?.name?.toLowerCase() || '';
         const q = searchQuery.value.toLowerCase();
         
@@ -86,17 +94,26 @@ const groupedLogs = computed(() => {
             
             <!-- Controls -->
             <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <div class="flex items-center space-x-2 text-slate-600">
+                <div class="flex items-center space-x-2 text-slate-600 w-full sm:w-auto shrink-0 justify-center sm:justify-start">
                     <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     <span class="text-sm font-bold">Auto-Update Aktif</span>
                 </div>
                 
-                <div class="w-full sm:w-72 relative">
-                    <input type="text" v-model="searchQuery" placeholder="Cari nama atau kelas..."
-                        class="w-full pl-10 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm">
-                    <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
+                    <!-- Dropdown Kelas -->
+                    <select v-model="selectedClass" class="w-full sm:w-48 bg-slate-50 border-slate-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm py-2">
+                        <option value="">Semua Kelas</option>
+                        <option v-for="c in classes" :key="c.id" :value="c.name">{{ c.name }}</option>
+                    </select>
+
+                    <!-- Pencarian Nama -->
+                    <div class="w-full sm:w-64 relative">
+                        <input type="text" v-model="searchQuery" placeholder="Cari nama siswa..."
+                            class="w-full pl-10 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
                 </div>
             </div>
 
