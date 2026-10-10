@@ -151,10 +151,6 @@ const toggleStudent = (id) => {
                                 <div>
                                     <div class="flex items-center space-x-2">
                                         <h3 class="font-bold text-slate-800 text-sm leading-tight group-hover:text-blue-600 transition-colors">{{ log.student?.name }}</h3>
-                                        <span v-if="log.student?.delay_logs?.length" class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm"
-                                            :class="log.student.delay_logs.length >= 3 ? 'bg-red-500 text-white border border-red-600' : 'bg-orange-100 text-orange-700 border border-orange-200'">
-                                            Telat ke-{{ log.student.delay_logs.length }}
-                                        </span>
                                     </div>
                                     <p class="text-[11px] text-slate-500 mt-1 font-medium bg-white px-2 py-0.5 rounded border border-slate-100 inline-block shadow-sm">
                                         {{ log.reason }}
@@ -175,12 +171,18 @@ const toggleStudent = (id) => {
                             
                             <!-- Expanded History (Accordion) -->
                             <div v-if="expandedStudentId === log.student_id" class="mt-3 pt-3 border-t border-slate-200/60 animate-fade-in">
-                                <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Riwayat Sebelumnya:</h4>
-                                <div v-if="log.student?.delay_logs?.length <= 1" class="text-xs text-slate-400 italic">
-                                    Ini adalah keterlambatan pertama.
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Riwayat Sebelumnya:</h4>
+                                    <span v-if="log.student?.active_delay_logs?.length" class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm"
+                                        :class="log.student.active_delay_logs.length >= 3 ? 'bg-red-500 text-white border border-red-600' : 'bg-orange-100 text-orange-700 border border-orange-200'">
+                                        Peringatan ke-{{ log.student.active_delay_logs.length }}
+                                    </span>
+                                </div>
+                                <div v-if="log.student?.active_delay_logs?.length <= 1" class="text-xs text-slate-400 italic">
+                                    Ini adalah keterlambatan pertama sejak direset.
                                 </div>
                                 <div v-else class="space-y-2">
-                                    <div v-for="(history, index) in log.student.delay_logs" :key="history.id" class="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-slate-100 shadow-sm">
+                                    <div v-for="(history, index) in log.student.active_delay_logs" :key="history.id" class="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-slate-100 shadow-sm">
                                         <div>
                                             <span class="font-bold text-slate-700">{{ new Date(history.delay_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}</span>
                                             <span class="text-slate-400 mx-1">•</span>
