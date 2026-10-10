@@ -179,7 +179,7 @@ const toggleStudent = (id) => {
                                     </span>
                                 </div>
                                 <div v-if="log.student?.active_delay_logs?.length <= 1" class="text-xs text-slate-400 italic">
-                                    Ini adalah keterlambatan pertama sejak direset.
+                                    Belum ada riwayat peringatan lain yang tercatat saat ini.
                                 </div>
                                 <div v-else class="space-y-2">
                                     <div v-for="(history, index) in log.student.active_delay_logs" :key="history.id" class="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-slate-100 shadow-sm">
