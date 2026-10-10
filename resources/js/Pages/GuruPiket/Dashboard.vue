@@ -20,6 +20,30 @@ const searchQuery = ref('');
 const searchResults = ref([]);
 const isSearching = ref(false);
 
+// Fitur Tiket Rombongan (Per Kelas)
+const showClassTicketModal = ref(false);
+const viewingClassTicket = ref(null);
+
+const todayLogsGroupedByClass = computed(() => {
+    const groups = {};
+    props.todayLogs.forEach(log => {
+        const className = log.student?.school_class?.name || 'Lainnya';
+        if (!groups[className]) {
+            groups[className] = {
+                class_name: className,
+                logs: []
+            };
+        }
+        groups[className].logs.push(log);
+    });
+    return Object.values(groups).sort((a, b) => a.class_name.localeCompare(b.class_name));
+});
+
+const openClassTicket = (group) => {
+    viewingClassTicket.value = group;
+    showClassTicketModal.value = false;
+};
+
 // Browse state
 const selectedClassId = ref('');
 const classStudents = ref([]);
@@ -481,7 +505,14 @@ const submitDeleteLog = () => {
                                 <h3 class="font-bold text-xl text-slate-800">Log Hari Ini</h3>
                                 <p class="text-sm text-slate-500 mt-1">Daftar siswa terlambat real-time</p>
                             </div>
-                            <div class="flex items-center space-x-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                                <button @click="showClassTicketModal = true"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Cetak Tiket Kelas
+                                </button>
                                 <div class="relative">
                                     <input type="text" v-model="logSearchQuery" placeholder="Cari siswa/kelas..."
                                         class="w-full sm:w-64 text-sm border-slate-200 bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm py-2 pl-9 pr-3 transition-colors">
@@ -720,6 +751,127 @@ const submitDeleteLog = () => {
                 </div>
             </div>
         </div>
+        </Teleport>
+
+        <!-- 5. Class List Modal for Tickets -->
+        <Teleport to="body">
+            <div v-if="showClassTicketModal"
+                class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+                <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+                    <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center sticky top-0">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Tiket Rombongan Kelas</h3>
+                            <p class="text-xs text-slate-500">Pilih kelas untuk melihat tiket hari ini</p>
+                        </div>
+                        <button @click="showClassTicketModal = false"
+                            class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow-md transition-all">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-4 overflow-y-auto flex-1 bg-white space-y-3">
+                        <div v-if="todayLogsGroupedByClass.length === 0" class="text-center py-8 text-slate-500 text-sm font-medium">
+                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
+                                <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <p>Belum ada keterlambatan hari ini.</p>
+                        </div>
+                        <div v-for="group in todayLogsGroupedByClass" :key="group.class_name" 
+                            class="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-blue-50 transition-colors">
+                            <div>
+                                <div class="font-bold text-slate-800">{{ group.class_name }}</div>
+                                <div class="text-xs text-slate-500 mt-0.5">{{ group.logs.length }} Siswa terlambat</div>
+                            </div>
+                            <button @click="openClassTicket(group)" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shadow-sm flex items-center">
+                                Buka Tiket
+                                <svg class="w-3 h-3 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- 6. Digital Class Ticket Modal -->
+        <Teleport to="body">
+            <div v-if="viewingClassTicket"
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-bounce-in relative flex flex-col max-h-[90vh]">
+                    <!-- Header -->
+                    <div class="bg-blue-600 p-6 text-center text-white relative overflow-hidden flex-shrink-0">
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500 rounded-full opacity-50"></div>
+                        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-700 rounded-full opacity-50"></div>
+                        <h2 class="text-2xl font-black tracking-widest uppercase relative z-10">TIKET ROMBONGAN</h2>
+                        <p class="text-blue-100 font-medium mt-1 relative z-10">Izin Masuk Kelas</p>
+                    </div>
+
+                    <!-- Ticket Content -->
+                    <div class="p-5 md:p-6 overflow-y-auto flex-1">
+                        <div class="text-center mb-4 flex flex-col items-center justify-center">
+                            <img src="/images/logo.png" alt="Logo SMK" class="h-12 w-auto object-contain mb-2">
+                            <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">SMKN 5 Telkom Banda Aceh</div>
+                        </div>
+
+                        <div class="space-y-3 mb-5">
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center shadow-inner">
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Kelas</div>
+                                <div class="text-xl font-black text-slate-800">{{ viewingClassTicket.class_name }}</div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tanggal</div>
+                                    <div class="text-sm font-bold text-slate-800">
+                                        {{ new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Petugas Piket</div>
+                                    <div class="text-sm font-bold text-slate-800 line-clamp-1" :title="$page.props.auth.user.name">{{ $page.props.auth.user.name }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t-2 border-dashed border-slate-200 pt-4 mb-2">
+                            <div class="flex justify-between items-end mb-3">
+                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Daftar Siswa</div>
+                                <div class="text-[11px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ viewingClassTicket.logs.length }} Anak</div>
+                            </div>
+                            <div class="space-y-2.5">
+                                <div v-for="(log, idx) in viewingClassTicket.logs" :key="log.id" class="flex justify-between items-start text-sm bg-white border border-slate-50 p-2 rounded-lg">
+                                    <div class="flex space-x-2">
+                                        <span class="font-bold text-slate-400 w-4">{{ idx + 1 }}.</span>
+                                        <div>
+                                            <div class="font-bold text-slate-800 leading-tight">{{ log.student?.name }}</div>
+                                            <div class="text-[10px] font-medium text-slate-500 mt-0.5">Alasan: {{ log.reason }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="font-mono text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shadow-sm border border-blue-100 shrink-0">
+                                        {{ new Date(log.delay_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="bg-slate-50 p-4 border-t border-slate-100 text-center flex-shrink-0">
+                        <p class="text-[10px] font-medium text-slate-500 italic mb-3">
+                            Tunjukkan layar ini kepada Guru Mata Pelajaran<br>atau difoto/screenshot sebagai bukti masuk.
+                        </p>
+                        <button @click="viewingClassTicket = null"
+                            class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-md">
+                            Tutup Tiket
+                        </button>
+                    </div>
+                </div>
+            </div>
         </Teleport>
 
     </AuthenticatedLayout>
