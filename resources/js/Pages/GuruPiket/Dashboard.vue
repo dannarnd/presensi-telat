@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import axios from 'axios';
+import html2canvas from 'html2canvas';
 
 const props = defineProps({
     todayLogs: Array,
@@ -42,6 +43,38 @@ const todayLogsGroupedByClass = computed(() => {
 const openClassTicket = (group) => {
     viewingClassTicket.value = group;
     showClassTicketModal.value = false;
+};
+
+// Download Ticket State
+const isDownloading = ref(false);
+const ticketElement = ref(null);
+
+const downloadTicket = async () => {
+    if (!ticketElement.value) return;
+    
+    isDownloading.value = true;
+    
+    // Tunggu Vue merender perubahan kelas (melepas max-height sementara)
+    await nextTick();
+    
+    try {
+        const canvas = await html2canvas(ticketElement.value, {
+            scale: 2, // Kualitas tinggi
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            windowHeight: ticketElement.value.scrollHeight, // Pastikan tidak terpotong
+        });
+        
+        const link = document.createElement('a');
+        link.download = `Surat_Izin_${viewingClassTicket.value.class_name}_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (e) {
+        console.error('Gagal mengunduh tiket', e);
+        alert('Gagal menyimpan gambar tiket.');
+    } finally {
+        isDownloading.value = false;
+    }
 };
 
 // Browse state
@@ -801,8 +834,15 @@ const submitDeleteLog = () => {
         <!-- 6. Digital Class Ticket Modal -->
         <Teleport to="body">
             <div v-if="viewingClassTicket"
-                class="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-slate-900/90 backdrop-blur-md overflow-y-auto py-10">
-                <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-bounce-in relative flex flex-col my-auto">
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                
+                <div 
+                    ref="ticketElement"
+                    :class="[
+                        'bg-white rounded-3xl w-full max-w-sm shadow-2xl animate-bounce-in relative flex flex-col',
+                        isDownloading ? 'h-auto overflow-visible' : 'max-h-[90vh] overflow-hidden'
+                    ]"
+                >
                     <!-- Header -->
                     <div class="bg-blue-600 p-6 text-center text-white relative overflow-hidden flex-shrink-0 rounded-t-3xl">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500 rounded-full opacity-50"></div>
@@ -812,7 +852,7 @@ const submitDeleteLog = () => {
                     </div>
 
                     <!-- Ticket Content -->
-                    <div class="p-5 md:p-6">
+                    <div :class="['p-5 md:p-6', isDownloading ? 'h-auto overflow-visible' : 'overflow-y-auto flex-1']">
                         <div class="text-center mb-4 flex flex-col items-center justify-center">
                             <img src="/images/logo.png" alt="Logo SMK" class="h-12 w-auto object-contain mb-2">
                             <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">SMKN 5 Telkom Banda Aceh</div>
@@ -861,14 +901,23 @@ const submitDeleteLog = () => {
                     </div>
 
                     <!-- Footer -->
-                    <div class="bg-slate-50 p-4 border-t border-slate-100 text-center flex-shrink-0">
+                    <div class="bg-slate-50 p-4 border-t border-slate-100 text-center flex-shrink-0" v-show="!isDownloading">
                         <p class="text-[10px] font-medium text-slate-500 italic mb-3">
                             Tunjukkan layar ini kepada Guru Mata Pelajaran<br>atau difoto/screenshot sebagai bukti masuk.
                         </p>
-                        <button @click="viewingClassTicket = null"
-                            class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-md">
-                            Tutup Tiket
-                        </button>
+                        <div class="flex space-x-2">
+                            <button @click="downloadTicket" :disabled="isDownloading"
+                                class="w-1/2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-3 rounded-xl transition-colors text-sm shadow-sm disabled:opacity-50 flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                {{ isDownloading ? 'Menyimpan...' : 'Unduh' }}
+                            </button>
+                            <button @click="viewingClassTicket = null" :disabled="isDownloading"
+                                class="w-1/2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-md disabled:opacity-50">
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
