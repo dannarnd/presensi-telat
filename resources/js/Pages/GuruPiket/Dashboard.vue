@@ -507,7 +507,7 @@ const submitDeleteLog = () => {
                             </div>
                             <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
                                 <button @click="showClassTicketModal = true"
-                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center justify-center">
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center justify-center whitespace-nowrap shrink-0">
                                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                     </svg>
@@ -801,18 +801,18 @@ const submitDeleteLog = () => {
         <!-- 6. Digital Class Ticket Modal -->
         <Teleport to="body">
             <div v-if="viewingClassTicket"
-                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
-                <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-bounce-in relative flex flex-col max-h-[90vh]">
+                class="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-slate-900/90 backdrop-blur-md overflow-y-auto py-10">
+                <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-bounce-in relative flex flex-col my-auto">
                     <!-- Header -->
-                    <div class="bg-blue-600 p-6 text-center text-white relative overflow-hidden flex-shrink-0">
+                    <div class="bg-blue-600 p-6 text-center text-white relative overflow-hidden flex-shrink-0 rounded-t-3xl">
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500 rounded-full opacity-50"></div>
                         <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-700 rounded-full opacity-50"></div>
-                        <h2 class="text-2xl font-black tracking-widest uppercase relative z-10">TIKET ROMBONGAN</h2>
-                        <p class="text-blue-100 font-medium mt-1 relative z-10">Izin Masuk Kelas</p>
+                        <h2 class="text-2xl font-black tracking-widest uppercase relative z-10">SURAT IZIN MASUK</h2>
+                        <p class="text-blue-100 font-medium mt-1 relative z-10">Kolektif Kelas</p>
                     </div>
 
                     <!-- Ticket Content -->
-                    <div class="p-5 md:p-6 overflow-y-auto flex-1">
+                    <div class="p-5 md:p-6">
                         <div class="text-center mb-4 flex flex-col items-center justify-center">
                             <img src="/images/logo.png" alt="Logo SMK" class="h-12 w-auto object-contain mb-2">
                             <div class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">SMKN 5 Telkom Banda Aceh</div>
