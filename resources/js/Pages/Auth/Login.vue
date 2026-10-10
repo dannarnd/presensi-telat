@@ -112,16 +112,26 @@ const submit = () => {
                 </button>
             </div>
 
-            <!-- Monitor Button for Subject Teachers -->
-            <div class="mt-4 pt-4 border-t border-slate-100">
-                <Link href="/pantau"
-                    class="w-full flex justify-center items-center py-3 px-4 border-2 border-emerald-500 rounded-xl shadow-sm text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transform transition-all hover:scale-[1.02]">
-                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Monitor Keterlambatan (Guru Mapel)
-                </Link>
+            <!-- Public Portals -->
+            <div class="mt-6 pt-6 border-t border-slate-100">
+                <p class="text-xs text-center font-bold text-slate-500 uppercase tracking-widest mb-4">Akses Publik</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Link href="/pantau"
+                        class="flex flex-col items-center justify-center p-3 border-2 border-emerald-500 rounded-xl shadow-sm text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all hover:scale-[1.02]">
+                        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Monitor Guru
+                    </Link>
+                    
+                    <Link href="/cek-siswa"
+                        class="flex flex-col items-center justify-center p-3 border-2 border-purple-500 rounded-xl shadow-sm text-sm font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 transition-all hover:scale-[1.02]">
+                        <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Cek Siswa (Wali)
+                    </Link>
+                </div>
             </div>
 
             <div class="mt-4 text-center">

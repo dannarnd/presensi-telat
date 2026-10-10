@@ -16,7 +16,9 @@ Route::get('/', function () {
 Route::get('/pantau', function () {
     $today = \Carbon\Carbon::today();
     
-    $todayLogs = \App\Models\DelayLog::with(['student.schoolClass'])
+    $todayLogs = \App\Models\DelayLog::with(['student.schoolClass', 'student.delayLogs' => function($query) {
+        $query->orderBy('delay_time', 'desc');
+    }])
         ->whereDate('delay_time', $today)
         ->orderBy('delay_time', 'desc')
         ->get();
@@ -28,6 +30,26 @@ Route::get('/pantau', function () {
         'classes' => $classes,
     ]);
 })->name('pantau');
+
+Route::get('/cek-siswa', function () {
+    return Inertia::render('CekSiswa');
+})->name('cek_siswa');
+
+Route::post('/api/cek-siswa', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'nis' => 'required|string',
+    ]);
+    
+    $student = \App\Models\Student::with(['schoolClass', 'delayLogs' => function($query) {
+        $query->orderBy('delay_time', 'desc');
+    }])->where('nis', $request->nis)->first();
+    
+    if (!$student) {
+        return response()->json(['message' => 'Siswa dengan NIS tersebut tidak ditemukan'], 404);
+    }
+    
+    return response()->json(['student' => $student]);
+});
 
 Route::get('/dashboard', function () {
     $role = auth()->user()->role;

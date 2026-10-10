@@ -60,6 +60,11 @@ const groupedLogs = computed(() => {
     return Object.values(groups).sort((a, b) => a.class_name.localeCompare(b.class_name));
 });
 
+const expandedStudentId = ref(null);
+const toggleStudent = (id) => {
+    expandedStudentId.value = expandedStudentId.value === id ? null : id;
+};
+
 </script>
 
 <template>
@@ -140,15 +145,50 @@ const groupedLogs = computed(() => {
                     </div>
 
                     <div class="p-4 flex-1 space-y-3 overflow-y-auto max-h-80">
-                        <div v-for="log in group.logs" :key="log.id" class="flex justify-between items-start p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-sm leading-tight">{{ log.student?.name }}</h3>
-                                <p class="text-[11px] text-slate-500 mt-1 font-medium bg-white px-2 py-0.5 rounded border border-slate-100 inline-block shadow-sm">
-                                    {{ log.reason }}
-                                </p>
+                        <div v-for="log in group.logs" :key="log.id" class="p-3 bg-slate-50/50 rounded-xl border border-slate-100 flex flex-col transition-all">
+                            <!-- Student Info Row -->
+                            <div class="flex justify-between items-start cursor-pointer group" @click="toggleStudent(log.student_id)">
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h3 class="font-bold text-slate-800 text-sm leading-tight group-hover:text-blue-600 transition-colors">{{ log.student?.name }}</h3>
+                                        <span v-if="log.student?.delay_logs?.length" class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm"
+                                            :class="log.student.delay_logs.length >= 3 ? 'bg-red-500 text-white border border-red-600' : 'bg-orange-100 text-orange-700 border border-orange-200'">
+                                            Telat ke-{{ log.student.delay_logs.length }}
+                                        </span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-1 font-medium bg-white px-2 py-0.5 rounded border border-slate-100 inline-block shadow-sm">
+                                        {{ log.reason }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-col items-end space-y-1">
+                                    <div class="text-xs font-black font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded-md shadow-sm border border-blue-100">
+                                        {{ new Date(log.delay_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 group-hover:text-blue-500 font-medium flex items-center">
+                                        Lihat Detail
+                                        <svg class="w-3 h-3 ml-0.5 transform transition-transform" :class="{'rotate-180': expandedStudentId === log.student_id}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-xs font-black font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded-md shrink-0 shadow-sm border border-blue-100">
-                                {{ new Date(log.delay_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
+                            
+                            <!-- Expanded History (Accordion) -->
+                            <div v-if="expandedStudentId === log.student_id" class="mt-3 pt-3 border-t border-slate-200/60 animate-fade-in">
+                                <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Riwayat Sebelumnya:</h4>
+                                <div v-if="log.student?.delay_logs?.length <= 1" class="text-xs text-slate-400 italic">
+                                    Ini adalah keterlambatan pertama.
+                                </div>
+                                <div v-else class="space-y-2">
+                                    <div v-for="(history, index) in log.student.delay_logs" :key="history.id" class="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-slate-100 shadow-sm">
+                                        <div>
+                                            <span class="font-bold text-slate-700">{{ new Date(history.delay_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}</span>
+                                            <span class="text-slate-400 mx-1">•</span>
+                                            <span class="text-slate-600 font-medium">{{ history.reason }}</span>
+                                        </div>
+                                        <span class="text-slate-400 font-mono text-[10px]">{{ new Date(history.delay_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
