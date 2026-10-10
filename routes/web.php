@@ -16,7 +16,7 @@ Route::get('/', function () {
 Route::get('/pantau', function () {
     $today = \Carbon\Carbon::today();
     
-    $todayLogs = \App\Models\DelayLog::with(['student.schoolClass', 'reporter'])
+    $todayLogs = \App\Models\DelayLog::with(['student.schoolClass'])
         ->whereDate('delay_time', $today)
         ->orderBy('delay_time', 'desc')
         ->get();
