@@ -52,34 +52,29 @@ const openDetail = (student) => {
 };
 
 // Counseling Modal
-import { useForm, usePage } from '@inertiajs/vue3';
-const page = usePage();
+import { useForm } from '@inertiajs/vue3';
 const showCounselingModal = ref(false);
 const studentToCounsel = ref(null);
 const counselingForm = useForm({
     student_id: '',
-    counselor_name: (typeof window !== 'undefined' ? localStorage.getItem('guru_bk_counselor_name') : '') || page.props.auth?.user?.name || '',
+    counselor_name: '',
     notes: '',
 });
 
 const openCounseling = (student) => {
     studentToCounsel.value = student;
     counselingForm.student_id = student.id;
-    if (!counselingForm.counselor_name) {
-        counselingForm.counselor_name = (typeof window !== 'undefined' ? localStorage.getItem('guru_bk_counselor_name') : '') || page.props.auth?.user?.name || '';
-    }
+    counselingForm.counselor_name = ''; // Selalu kosong bersih agar wajib diinput oleh Guru BK yang sedang bertugas
     counselingForm.notes = '';
+    counselingForm.clearErrors();
     showCounselingModal.value = true;
 };
 
 const submitCounseling = () => {
-    if (counselingForm.counselor_name && typeof window !== 'undefined') {
-        localStorage.setItem('guru_bk_counselor_name', counselingForm.counselor_name);
-    }
     counselingForm.post(route('guru_bk.counseling.store'), {
         onSuccess: () => {
             showCounselingModal.value = false;
-            counselingForm.notes = '';
+            counselingForm.reset();
         }
     });
 };
