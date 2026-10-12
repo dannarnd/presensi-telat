@@ -52,26 +52,34 @@ const openDetail = (student) => {
 };
 
 // Counseling Modal
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
+const page = usePage();
 const showCounselingModal = ref(false);
 const studentToCounsel = ref(null);
 const counselingForm = useForm({
     student_id: '',
+    counselor_name: (typeof window !== 'undefined' ? localStorage.getItem('guru_bk_counselor_name') : '') || page.props.auth?.user?.name || '',
     notes: '',
 });
 
 const openCounseling = (student) => {
     studentToCounsel.value = student;
     counselingForm.student_id = student.id;
+    if (!counselingForm.counselor_name) {
+        counselingForm.counselor_name = (typeof window !== 'undefined' ? localStorage.getItem('guru_bk_counselor_name') : '') || page.props.auth?.user?.name || '';
+    }
     counselingForm.notes = '';
     showCounselingModal.value = true;
 };
 
 const submitCounseling = () => {
+    if (counselingForm.counselor_name && typeof window !== 'undefined') {
+        localStorage.setItem('guru_bk_counselor_name', counselingForm.counselor_name);
+    }
     counselingForm.post(route('guru_bk.counseling.store'), {
         onSuccess: () => {
             showCounselingModal.value = false;
-            counselingForm.reset();
+            counselingForm.notes = '';
         }
     });
 };
@@ -232,6 +240,25 @@ const submitCounseling = () => {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Riwayat Pembinaan / Konseling Sebelumnya -->
+                        <div v-if="selectedStudent?.counseling_logs?.length" class="mt-8 pt-6 border-t border-slate-200">
+                            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Riwayat Konseling & Penyelesaian Kasus
+                            </h4>
+                            <div class="space-y-3">
+                                <div v-for="cLog in selectedStudent.counseling_logs" :key="cLog.id" class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 text-sm">
+                                    <div class="flex justify-between items-start mb-1.5">
+                                        <span class="font-bold text-blue-900">{{ cLog.counselor_name || cLog.user?.name || 'Guru BK' }}</span>
+                                        <span class="text-xs text-slate-500 font-medium">{{ new Date(cLog.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}</span>
+                                    </div>
+                                    <p class="text-slate-700 text-xs leading-relaxed whitespace-pre-wrap">{{ cLog.notes }}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -255,12 +282,27 @@ const submitCounseling = () => {
 
                     <form @submit.prevent="submitCounseling" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-2">Catatan Konseling / Solusi</label>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                <span>Nama Guru BK Penindak <span class="text-red-500">*</span></span>
+                                <span class="text-xs text-slate-400 font-normal">Identitas resmi laporan</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                v-model="counselingForm.counselor_name" 
+                                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm text-sm"
+                                placeholder="Contoh: Dra. Nurhayati / Guru BK"
+                                required
+                            />
+                            <p v-if="counselingForm.errors.counselor_name" class="mt-1 text-sm text-red-600">{{ counselingForm.errors.counselor_name }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Catatan Konseling / Solusi <span class="text-red-500">*</span></label>
                             <textarea 
                                 v-model="counselingForm.notes" 
                                 rows="4" 
-                                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                                placeholder="Misal: Orang tua sudah dipanggil, anak berjanji tidak akan bangun kesiangan lagi..."
+                                class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm text-sm"
+                                placeholder="Misal: Orang tua sudah dipanggil ke ruang BK, siswa membuat surat komitmen tidak terlambat lagi..."
                                 required
                             ></textarea>
                             <p v-if="counselingForm.errors.notes" class="mt-1 text-sm text-red-600">{{ counselingForm.errors.notes }}</p>
@@ -270,7 +312,7 @@ const submitCounseling = () => {
                             <button type="button" @click="showCounselingModal = false" class="px-5 py-2.5 text-slate-600 hover:text-slate-800 font-bold transition-colors">Batal</button>
                             <button 
                                 type="submit" 
-                                :disabled="counselingForm.processing || !counselingForm.notes" 
+                                :disabled="counselingForm.processing || !counselingForm.notes || !counselingForm.counselor_name" 
                                 class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95 flex items-center"
                             >
                                 <svg v-if="!counselingForm.processing" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

@@ -11,9 +11,15 @@ class GuruBKController extends Controller
     public function index()
     {
         // Get all students with their active delay count
-        $students = Student::with(['schoolClass', 'delayLogs' => function($q) {
-            $q->orderBy('delay_time', 'desc');
-        }])
+        $students = Student::with([
+            'schoolClass', 
+            'delayLogs' => function($q) {
+                $q->orderBy('delay_time', 'desc');
+            },
+            'counselingLogs' => function($q) {
+                $q->with('user')->orderBy('created_at', 'desc');
+            }
+        ])
             ->where('status', 'active')
             ->withCount('activeDelayLogs')
             ->has('activeDelayLogs', '>', 0)
@@ -40,6 +46,7 @@ class GuruBKController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
+            'counselor_name' => 'required|string|max:255',
             'notes' => 'required|string',
         ]);
 
@@ -47,6 +54,7 @@ class GuruBKController extends Controller
             \App\Models\CounselingLog::create([
                 'student_id' => $request->student_id,
                 'user_id' => auth()->id(),
+                'counselor_name' => $request->counselor_name,
                 'notes' => $request->notes,
             ]);
 
