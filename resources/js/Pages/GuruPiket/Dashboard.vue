@@ -161,6 +161,8 @@ watch(selectedClassId, async (newVal) => {
     }
 });
 
+const submitBtnRef = ref(null);
+
 const selectStudent = (student) => {
     selectedStudent.value = student;
     form.student_id = student.id;
@@ -173,11 +175,17 @@ const selectStudent = (student) => {
 const selectReason = (reason) => {
     form.reason = reason;
     showManualReason.value = false;
+    nextTick(() => {
+        submitBtnRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
 };
 
 const toggleManualReason = () => {
     form.reason = '';
     showManualReason.value = true;
+    nextTick(() => {
+        submitBtnRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
 };
 
 const submitForm = () => {
@@ -288,14 +296,14 @@ const submitDeleteLog = () => {
             <h2 class="font-bold text-2xl text-slate-800 leading-tight">Terminal Guru Piket</h2>
         </template>
 
-        <div class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="py-2 md:py-4 max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                 <!-- Input Panel (Left) -->
                 <div class="lg:col-span-5">
                     <div
-                        class="bg-white rounded-2xl shadow-xl shadow-blue-100/50 border border-blue-50 p-6 sticky top-8">
-                        <div class="flex items-center space-x-3 mb-6">
+                        class="bg-white rounded-2xl shadow-xl shadow-blue-100/50 border border-blue-50 p-5 md:p-6">
+                        <div class="flex items-center space-x-3 mb-4">
                             <div class="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
                                 <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -457,19 +465,19 @@ const submitDeleteLog = () => {
 
                         <!-- Selected Student Indicator -->
                         <div v-if="selectedStudent"
-                            class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-100 rounded-xl flex justify-between items-center animate-fade-in shadow-sm">
+                            class="mb-4 p-3.5 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-100 rounded-xl flex justify-between items-center animate-fade-in shadow-sm">
                             <div>
-                                <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Siswa
+                                <div class="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">Siswa
                                     Terpilih</div>
-                                <div class="font-black text-blue-900 text-xl leading-none">{{ selectedStudent.name }}
+                                <div class="font-black text-blue-900 text-lg leading-tight">{{ selectedStudent.name }}
                                 </div>
-                                <div class="text-blue-700 text-sm font-medium mt-1">{{ selectedStudent.nisn }} &bull;
+                                <div class="text-blue-700 text-xs font-medium mt-0.5">{{ selectedStudent.nisn }} &bull;
                                     Kelas {{
                                         selectedStudent.school_class?.name }}</div>
                             </div>
                             <button @click="resetForm"
-                                class="h-10 w-10 rounded-full bg-white text-blue-400 hover:text-red-500 shadow-sm flex items-center justify-center transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                class="h-9 w-9 rounded-full bg-white text-blue-400 hover:text-red-500 shadow-sm flex items-center justify-center transition-colors shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12" />
@@ -478,12 +486,12 @@ const submitDeleteLog = () => {
                         </div>
 
                         <!-- 2. Quick-Tap Reasons -->
-                        <div v-if="selectedStudent" class="mb-8 animate-fade-in">
-                            <label class="block text-sm font-semibold text-slate-700 mb-3">Alasan Keterlambatan</label>
-                            <div class="flex flex-wrap gap-2">
+                        <div v-if="selectedStudent" class="mb-4 animate-fade-in">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Alasan Keterlambatan</label>
+                            <div class="flex flex-wrap gap-1.5">
                                 <button v-for="reason in reasons" :key="reason" type="button"
                                     @click="selectReason(reason)" :class="[
-                                        'px-4 py-2.5 rounded-lg border font-bold text-sm transition-all',
+                                        'px-3 py-2 rounded-lg border font-bold text-xs md:text-sm transition-all',
                                         form.reason === reason && !showManualReason
                                             ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105'
                                             : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
@@ -491,7 +499,7 @@ const submitDeleteLog = () => {
                                     {{ reason }}
                                 </button>
                                 <button type="button" @click="toggleManualReason" :class="[
-                                    'px-4 py-2.5 rounded-lg border font-bold text-sm transition-all',
+                                    'px-3 py-2 rounded-lg border font-bold text-xs md:text-sm transition-all',
                                     showManualReason
                                         ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200 scale-105'
                                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
@@ -500,42 +508,44 @@ const submitDeleteLog = () => {
                                 </button>
                             </div>
 
-                            <div v-if="showManualReason" class="mt-4 animate-fade-in">
+                            <div v-if="showManualReason" class="mt-3 animate-fade-in">
                                 <input type="text" v-model="form.reason" placeholder="Ketik alasan spesifik..."
-                                    class="w-full border-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm"
+                                    class="w-full text-sm border-slate-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm"
                                     autofocus>
                             </div>
                         </div>
 
                         <!-- Nama Guru Piket (Opsional) -->
-                        <div v-if="selectedStudent" class="mb-8 animate-fade-in">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Guru Piket <span
-                                    class="text-slate-400 font-normal">(Opsional)</span></label>
+                        <div v-if="selectedStudent" class="mb-4 animate-fade-in">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nama Guru Piket <span
+                                    class="text-slate-400 font-normal lowercase">(opsional)</span></label>
                             <input type="text" v-model="form.reporter_name" placeholder="Nama guru yang bertugas piket"
-                                class="w-full border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm">
+                                class="w-full text-sm border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm">
                         </div>
 
                         <!-- 3. Submit Button -->
                         <div v-if="form.errors.student_id"
-                            class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                            class="mb-3 bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24"
+                                    <svg class="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
                                 </div>
-                                <div class="ml-3">
-                                    <p class="text-sm font-bold text-red-700">{{ form.errors.student_id }}</p>
+                                <div class="ml-2.5">
+                                    <p class="text-xs font-bold text-red-700">{{ form.errors.student_id }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <button v-if="selectedStudent" @click="submitForm" :disabled="form.processing || !form.reason"
-                            class="w-full bg-gradient-to-r from-blue-600 to-blue-600 text-white font-black text-lg py-4 rounded-xl shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center">
-                            {{ form.processing ? 'Memproses...' : 'SIMPAN' }}
-                        </button>
+                        <div ref="submitBtnRef" v-if="selectedStudent" class="pt-1">
+                            <button @click="submitForm" :disabled="form.processing || !form.reason"
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-600 text-white font-black text-base py-3.5 rounded-xl shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex justify-center items-center">
+                                {{ form.processing ? 'Memproses...' : 'SIMPAN' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
