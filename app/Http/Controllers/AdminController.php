@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DelayLog;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\User;
@@ -15,9 +16,11 @@ class AdminController extends Controller
         $totalUsers = User::count();
         $totalClasses = SchoolClass::count();
         $totalStudents = Student::count();
+        $totalCancelledLogs = DelayLog::onlyTrashed()->count();
+        $todayCancelledLogs = DelayLog::onlyTrashed()->whereDate('deleted_at', today())->count();
 
         // Get today's delay logs with count
-        $todayLogs = \App\Models\DelayLog::with(['student' => function ($query) {
+        $todayLogs = DelayLog::with(['student' => function ($query) {
                 $query->withCount('activeDelayLogs')->with('schoolClass');
             }])
             ->whereDate('created_at', today())
@@ -28,6 +31,8 @@ class AdminController extends Controller
             'totalUsers' => $totalUsers,
             'totalClasses' => $totalClasses,
             'totalStudents' => $totalStudents,
+            'totalCancelledLogs' => $totalCancelledLogs,
+            'todayCancelledLogs' => $todayCancelledLogs,
             'todayLogs' => $todayLogs,
         ]);
     }
@@ -343,5 +348,62 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mengimpor file: ' . $e->getMessage());
         }
+    }
+
+    public function cancellationLogs(Request $request)
+    {
+        $query = DelayLog::onlyTrashed()
+            ->with(['student.schoolClass', 'deletedByUser'])
+            ->orderBy('deleted_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($sq) use ($search) {
+                    $sq->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                       ->orWhereRaw('LOWER(nisn) LIKE ?', ["%{$search}%"]);
+                })
+                ->orWhereRaw('LOWER(deleter_name) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(deletion_reason) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(deletion_device) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(deletion_ip) LIKE ?', ["%{$search}%"]);
+            });
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('deleted_at', $request->date);
+        }
+
+        $logs = $query->paginate(15)->withQueryString();
+
+        return Inertia::render('Admin/CancellationLogs', [
+            'cancellationLogs' => $logs,
+            'filters' => [
+                'search' => $request->search ?? '',
+                'date' => $request->date ?? '',
+            ],
+            'stats' => [
+                'total' => DelayLog::onlyTrashed()->count(),
+                'today' => DelayLog::onlyTrashed()->whereDate('deleted_at', today())->count(),
+            ],
+        ]);
+    }
+
+    public function restoreCancellationLog($id)
+    {
+        $log = DelayLog::onlyTrashed()->findOrFail($id);
+        $studentName = $log->student?->name ?? 'Siswa';
+        $log->restore();
+
+        return redirect()->back()->with('success', "Log keterlambatan untuk {$studentName} berhasil dipulihkan!");
+    }
+
+    public function forceDeleteCancellationLog($id)
+    {
+        $log = DelayLog::onlyTrashed()->findOrFail($id);
+        $studentName = $log->student?->name ?? 'Siswa';
+        $log->forceDelete();
+
+        return redirect()->back()->with('success', "Log keterlambatan untuk {$studentName} berhasil dimusnahkan secara permanen.");
     }
 }

@@ -1,11 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
     totalUsers: Number,
     totalClasses: Number,
     totalStudents: Number,
+    totalCancelledLogs: Number,
+    todayCancelledLogs: Number,
     todayLogs: Array,
 });
 
@@ -41,7 +44,7 @@ const getWarningBadge = (count) => {
         <div class="py-12 max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             <!-- Stat Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4">
                     <div class="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                         <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -69,6 +72,20 @@ const getWarningBadge = (count) => {
                         <div class="text-3xl font-black text-slate-800">{{ totalStudents }}</div>
                     </div>
                 </div>
+                <Link :href="route('admin.cancellation_logs.index')" class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4 hover:border-rose-300 hover:shadow-rose-100 transition-all group">
+                    <div class="h-14 w-14 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-105 transition-transform">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>Log Batal</span>
+                            <span v-if="todayCancelledLogs > 0" class="px-1.5 py-0.5 text-[10px] bg-rose-500 text-white font-black rounded-full">{{ todayCancelledLogs }} baru</span>
+                        </div>
+                        <div class="text-3xl font-black text-slate-800">{{ totalCancelledLogs ?? 0 }}</div>
+                    </div>
+                </Link>
             </div>
 
             <!-- ===== BACKUP PANEL ===== -->

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DelayLog;
 use App\Models\Student;
+use App\Services\DeviceInfoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -118,10 +119,32 @@ class GuruPiketController extends Controller
         return redirect()->back()->with('success', 'Log keterlambatan berhasil diperbarui.');
     }
 
-    public function destroy(DelayLog $delayLog)
+    public function destroy(Request $request, DelayLog $delayLog)
     {
+        $request->validate([
+            'deleter_name' => 'required|string|max:100',
+            'deletion_reason' => 'required|string|max:255',
+        ], [
+            'deleter_name.required' => 'Nama guru piket / petugas pembatal wajib diisi.',
+            'deletion_reason.required' => 'Alasan pembatalan keterlambatan wajib diisi.',
+        ]);
+
+        $ip = DeviceInfoService::getClientIp($request);
+        $userAgent = $request->userAgent() ?? '';
+        $device = DeviceInfoService::parse($userAgent);
+
+        $delayLog->update([
+            'deleter_name' => $request->deleter_name,
+            'deletion_reason' => $request->deletion_reason,
+            'deletion_ip' => $ip,
+            'deletion_user_agent' => $userAgent,
+            'deletion_device' => $device,
+            'deleted_by_user_id' => auth()->id(),
+        ]);
+
+        $studentName = $delayLog->student?->name ?? 'siswa';
         $delayLog->delete();
 
-        return redirect()->back()->with('success', 'Log keterlambatan berhasil dihapus.');
+        return redirect()->back()->with('success', "Log keterlambatan untuk {$studentName} berhasil dibatalkan dan tercatat dalam log audit forensik.");
     }
 }

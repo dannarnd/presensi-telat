@@ -251,20 +251,31 @@ const submitEditLog = () => {
     });
 };
 
-// Delete Log
+// Delete Log (Pembatalan Log Keterlambatan)
 const showDeleteLogModal = ref(false);
 const logToDelete = ref(null);
-const deleteLogForm = useForm({});
+const deleteLogForm = useForm({
+    deleter_name: '',
+    deletion_reason: '',
+});
 
 const openDeleteLog = (log) => {
     logToDelete.value = log;
+    deleteLogForm.reset();
+    deleteLogForm.clearErrors();
     showDeleteLogModal.value = true;
+};
+
+const setQuickReason = (reason) => {
+    deleteLogForm.deletion_reason = reason;
 };
 
 const submitDeleteLog = () => {
     deleteLogForm.delete(route('guru_piket.destroy_log', logToDelete.value.id), {
+        preserveScroll: true,
         onSuccess: () => {
             showDeleteLogModal.value = false;
+            deleteLogForm.reset();
         }
     });
 };
@@ -760,28 +771,122 @@ const submitDeleteLog = () => {
             </div>
         </div>
 
-        <!-- Delete Log Modal -->
+        <!-- Delete Log Modal (Pembatalan Berita Acara Forensik) -->
         <div v-if="showDeleteLogModal"
-            class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-            <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+            class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Batalkan Log Keterlambatan</h3>
+                        <p class="text-xs text-slate-500">Berita Acara Pembatalan Resmi & Audit Keamanan</p>
+                    </div>
                 </div>
-                <h3 class="text-xl font-bold text-slate-800 mb-2">Hapus Log Keterlambatan?</h3>
-                <p class="text-sm text-slate-500 mb-6">Log atas nama <strong>{{ logToDelete?.student?.name }}</strong>
-                    akan
-                    dihapus permanen. Tindakan ini tidak bisa dibatalkan.</p>
 
-                <div class="flex justify-center space-x-3">
-                    <button @click="showDeleteLogModal = false"
-                        class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Batal</button>
-                    <button @click="submitDeleteLog" :disabled="deleteLogForm.processing"
-                        class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-red-700 disabled:opacity-50 transition-colors">Ya,
-                        Hapus</button>
+                <!-- Forensic Security Notice -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start space-x-2.5 text-xs text-amber-800">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <strong class="font-bold">Audit Forensik Aktif:</strong> Setiap pembatalan dicatat permanen dalam sistem keamanan Admin (termasuk Alamat IP, Waktu, & Spesifikasi Perangkat).
+                    </div>
                 </div>
+
+                <!-- Student Info Card -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 mb-4 text-xs text-slate-600 space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Nama Siswa:</span>
+                        <span class="font-bold text-slate-800">{{ logToDelete?.student?.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Kelas / NISN:</span>
+                        <span class="font-semibold text-slate-700">{{ logToDelete?.student?.school_class?.name }} ({{ logToDelete?.student?.nisn }})</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Petugas Pencatat Awal:</span>
+                        <span class="font-medium text-slate-700">{{ logToDelete?.reporter_name || 'Guru Piket' }}</span>
+                    </div>
+                </div>
+
+                <form @submit.prevent="submitDeleteLog" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Nama Guru Piket / Petugas Pembatal <span class="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            v-model="deleteLogForm.deleter_name"
+                            placeholder="Contoh: Dra. Nurhayati / Pak Irwansyah"
+                            class="w-full text-sm rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm"
+                            required
+                        />
+                        <p v-if="deleteLogForm.errors.deleter_name" class="mt-1 text-xs text-rose-600 font-medium">{{ deleteLogForm.errors.deleter_name }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Alasan Pembatalan <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea
+                            v-model="deleteLogForm.deletion_reason"
+                            rows="2"
+                            placeholder="Tulis alasan jelas pembatalan data ini..."
+                            class="w-full text-sm rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm"
+                            required
+                        ></textarea>
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <button
+                                type="button"
+                                @click="setQuickReason('Salah pilih nama / kelas siswa')"
+                                class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors"
+                            >
+                                + Salah nama
+                            </button>
+                            <button
+                                type="button"
+                                @click="setQuickReason('Dispensasi tugas sekolah / guru')"
+                                class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors"
+                            >
+                                + Dispensasi
+                            </button>
+                            <button
+                                type="button"
+                                @click="setQuickReason('Siswa hadir tepat waktu (kesalahan input)')"
+                                class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors"
+                            >
+                                + Tepat waktu
+                            </button>
+                        </div>
+                        <p v-if="deleteLogForm.errors.deletion_reason" class="mt-1 text-xs text-rose-600 font-medium">{{ deleteLogForm.errors.deletion_reason }}</p>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                        <button
+                            type="button"
+                            @click="showDeleteLogModal = false"
+                            class="px-4 py-2 text-slate-600 hover:text-slate-800 font-semibold bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-sm"
+                        >
+                            Tutup
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="deleteLogForm.processing || !deleteLogForm.deleter_name || !deleteLogForm.deletion_reason"
+                            class="bg-rose-600 text-white px-5 py-2 rounded-xl font-bold text-sm shadow-md shadow-rose-200 hover:bg-rose-700 disabled:opacity-50 transition-all flex items-center gap-1.5"
+                        >
+                            <svg v-if="deleteLogForm.processing" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span>{{ deleteLogForm.processing ? 'Memproses...' : 'Konfirmasi Batalkan Log' }}</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
         </Teleport>
