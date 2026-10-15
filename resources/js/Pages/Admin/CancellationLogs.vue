@@ -14,7 +14,11 @@ const search = ref(props.filters.search || '');
 const date = ref(props.filters.date || '');
 
 const handleFilter = () => {
-    router.get(route('admin.cancellation_logs.index'), {
+    const url = (typeof route === 'function' && route().has('admin.cancellation_logs.index'))
+        ? route('admin.cancellation_logs.index')
+        : '/admin/cancellation-logs';
+
+    router.get(url, {
         search: search.value || undefined,
         date: date.value || undefined,
     }, {
@@ -41,7 +45,11 @@ const openRestoreModal = (log) => {
 
 const submitRestore = () => {
     if (!logToRestore.value) return;
-    restoreForm.post(route('admin.cancellation_logs.restore', logToRestore.value.id), {
+    const url = (typeof route === 'function' && route().has('admin.cancellation_logs.restore'))
+        ? route('admin.cancellation_logs.restore', logToRestore.value.id)
+        : `/admin/cancellation-logs/${logToRestore.value.id}/restore`;
+
+    restoreForm.post(url, {
         preserveScroll: true,
         onSuccess: () => {
             showRestoreModal.value = false;
@@ -62,7 +70,11 @@ const openForceDeleteModal = (log) => {
 
 const submitForceDelete = () => {
     if (!logToForceDelete.value) return;
-    forceDeleteForm.delete(route('admin.cancellation_logs.force_delete', logToForceDelete.value.id), {
+    const url = (typeof route === 'function' && route().has('admin.cancellation_logs.force_delete'))
+        ? route('admin.cancellation_logs.force_delete', logToForceDelete.value.id)
+        : `/admin/cancellation-logs/${logToForceDelete.value.id}/force`;
+
+    forceDeleteForm.delete(url, {
         preserveScroll: true,
         onSuccess: () => {
             showForceDeleteModal.value = false;

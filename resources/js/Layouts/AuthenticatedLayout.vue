@@ -52,6 +52,29 @@ const getMenus = () => {
 };
 
 const menus = getMenus();
+
+const resolveRouteUrl = (routeName) => {
+    try {
+        if (typeof route === 'function' && route().has(routeName)) {
+            return route(routeName);
+        }
+    } catch (e) {
+        // fallback
+    }
+    if (routeName === 'admin.cancellation_logs.index') return '/admin/cancellation-logs';
+    return '#';
+};
+
+const isRouteActive = (routeName) => {
+    try {
+        if (typeof route === 'function' && route().has(routeName)) {
+            return route().current(routeName);
+        }
+    } catch (e) {
+        return false;
+    }
+    return false;
+};
 </script>
 
 <template>
@@ -73,11 +96,11 @@ const menus = getMenus();
             <div class="p-6 relative z-10 flex-1 overflow-y-auto">
                 <div class="text-xs uppercase tracking-wider text-slate-500 font-bold mb-4 ml-2">Menu Utama</div>
                 <nav class="space-y-2">
-                    <Link v-for="menu in menus" :key="menu.name" :href="route(menu.route)" :class="[
+                    <Link v-for="menu in menus" :key="menu.name" :href="resolveRouteUrl(menu.route)" :class="[
                         'flex items-center px-4 py-3 rounded-xl transition-all duration-300 group',
-                        route().current(menu.route) ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/20 font-semibold' : 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 font-medium'
+                        isRouteActive(menu.route) ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/20 font-semibold' : 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 font-medium'
                     ]">
-                        <svg :class="['w-5 h-5 mr-3 transition-transform duration-300', route().current(menu.route) ? 'transform scale-110' : 'opacity-75 group-hover:opacity-100 group-hover:scale-110']"
+                        <svg :class="['w-5 h-5 mr-3 transition-transform duration-300', isRouteActive(menu.route) ? 'transform scale-110' : 'opacity-75 group-hover:opacity-100 group-hover:scale-110']"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="menu.icon" />
                         </svg>
@@ -146,9 +169,9 @@ const menus = getMenus();
             <div v-if="showingNavigationDropdown"
                 class="md:hidden bg-white text-slate-800 shadow-xl absolute w-full z-50 top-16 border-t border-slate-100">
                 <div class="px-4 py-4 space-y-2">
-                    <Link v-for="menu in menus" :key="menu.name" :href="route(menu.route)" :class="[
+                    <Link v-for="menu in menus" :key="menu.name" :href="resolveRouteUrl(menu.route)" :class="[
                         'block px-4 py-3 rounded-xl text-base font-medium transition-colors',
-                        route().current(menu.route) ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                        isRouteActive(menu.route) ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
                     ]" @click="showingNavigationDropdown = false">
                         {{ menu.name }}
                     </Link>
