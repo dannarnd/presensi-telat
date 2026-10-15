@@ -103,11 +103,6 @@ const formatDate = (dateStr) => {
         minute: '2-digit',
     });
 };
-
-const isMobileDevice = (deviceStr) => {
-    if (!deviceStr) return false;
-    return deviceStr.includes('📱') || deviceStr.toLowerCase().includes('android') || deviceStr.toLowerCase().includes('iphone');
-};
 </script>
 
 <template>
@@ -116,13 +111,13 @@ const isMobileDevice = (deviceStr) => {
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <div class="flex items-center space-x-2.5">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-black bg-rose-100 text-rose-700 uppercase tracking-wider">
-                            Keamanan Forensik
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-black bg-slate-100 text-slate-700 uppercase tracking-wider">
+                            Audit Sistem
                         </span>
-                        <h2 class="font-extrabold text-2xl text-slate-800 leading-tight">Log Audit Pembatalan</h2>
+                        <h2 class="font-extrabold text-2xl text-slate-800 leading-tight">Log Pembatalan Keterlambatan</h2>
                     </div>
                     <p class="text-xs text-slate-500 mt-1">
-                        Pusat investigasi rekam jejak penghapusan presensi, identifikasi perangkat (HP/Laptop), dan pemulihan data siswa.
+                        Rekam jejak pembatalan presensi, dokumentasi alasan & informasi teknis perangkat, serta fitur pemulihan data (Restore).
                     </p>
                 </div>
             </div>
@@ -140,7 +135,7 @@ const isMobileDevice = (deviceStr) => {
                 </div>
             </div>
 
-            <!-- Forensic Stats Cards -->
+            <!-- Stats Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center space-x-4">
                     <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
@@ -155,27 +150,27 @@ const isMobileDevice = (deviceStr) => {
                 </div>
 
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div>
                         <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Dibatalkan Hari Ini</div>
-                        <div class="text-2xl font-black text-rose-600">{{ stats?.today ?? 0 }} <span class="text-xs font-semibold text-slate-400 font-normal">kasus</span></div>
+                        <div class="text-2xl font-black text-blue-600">{{ stats?.today ?? 0 }} <span class="text-xs font-semibold text-slate-400 font-normal">kasus</span></div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-5 shadow-sm border border-amber-200/80 flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </div>
                     <div>
-                        <div class="text-xs font-bold text-amber-900 uppercase tracking-wider">Deteksi Smartphone</div>
-                        <p class="text-xs text-amber-700 leading-relaxed font-medium">
-                            Baris bertanda <span class="font-bold text-rose-700">HP</span> mengindikasikan penghapusan lewat ponsel siswa, bukan laptop piket.
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pemulihan Data</div>
+                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                            Klik tombol <strong>Pulihkan</strong> pada baris siswa untuk mengembalikan status keterlambatan ke sistem.
                         </p>
                     </div>
                 </div>
@@ -258,10 +253,7 @@ const isMobileDevice = (deviceStr) => {
                             <tr
                                 v-for="log in cancellationLogs?.data"
                                 :key="log.id"
-                                :class="[
-                                    'hover:bg-slate-50/70 transition-colors',
-                                    isMobileDevice(log.deletion_device) ? 'bg-rose-50/30' : ''
-                                ]"
+                                class="hover:bg-slate-50/70 transition-colors"
                             >
                                 <!-- Student Info -->
                                 <td class="py-3.5 px-4 align-top">
@@ -278,7 +270,7 @@ const isMobileDevice = (deviceStr) => {
                                 <!-- Times -->
                                 <td class="py-3.5 px-4 align-top space-y-1">
                                     <div>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700">
                                             Dibatalkan:
                                         </span>
                                         <div class="font-bold text-slate-800 mt-0.5">{{ formatDate(log.deleted_at) }}</div>
@@ -292,7 +284,7 @@ const isMobileDevice = (deviceStr) => {
                                 <td class="py-3.5 px-4 align-top space-y-1">
                                     <div>
                                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Petugas Pembatal:</span>
-                                        <div class="font-bold text-rose-600">{{ log.deleter_name || '(Tidak tercatat)' }}</div>
+                                        <div class="font-bold text-slate-800">{{ log.deleter_name || '(Tidak tercatat)' }}</div>
                                     </div>
                                     <div class="text-[11px] text-slate-500">
                                         Pelapor Awal: <span class="font-medium text-slate-700">{{ log.reporter_name || 'Guru Piket' }}</span>
@@ -315,14 +307,7 @@ const isMobileDevice = (deviceStr) => {
                                 <!-- Forensic Device Info -->
                                 <td class="py-3.5 px-4 align-top space-y-1.5">
                                     <!-- Device Badge -->
-                                    <div
-                                        :class="[
-                                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border shadow-xs',
-                                            isMobileDevice(log.deletion_device)
-                                                ? 'bg-rose-100 text-rose-800 border-rose-200 animate-pulse'
-                                                : 'bg-slate-100 text-slate-700 border-slate-200'
-                                        ]"
-                                    >
+                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                                         <span>{{ log.deletion_device || 'Perangkat Tidak Dikenal' }}</span>
                                     </div>
 

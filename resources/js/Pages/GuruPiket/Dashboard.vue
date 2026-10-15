@@ -784,17 +784,17 @@ const submitDeleteLog = () => {
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-slate-800">Batalkan Log Keterlambatan</h3>
-                        <p class="text-xs text-slate-500">Berita Acara Pembatalan Resmi & Audit Keamanan</p>
+                        <p class="text-xs text-slate-500">Formulir Pembatalan Presensi Siswa</p>
                     </div>
                 </div>
 
-                <!-- Forensic Security Notice -->
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start space-x-2.5 text-xs text-amber-800">
-                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <!-- Administrative Notice -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-start space-x-2.5 text-xs text-slate-700">
+                    <svg class="w-4 h-4 text-slate-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                        <strong class="font-bold">Audit Forensik Aktif:</strong> Setiap pembatalan dicatat permanen dalam sistem keamanan Admin (termasuk Alamat IP, Waktu, & Spesifikasi Perangkat).
+                        <strong class="font-bold text-slate-800">Catatan Sistem:</strong> Pembatalan log presensi akan dicatat ke dalam arsip riwayat Admin untuk dokumentasi dan verifikasi data.
                     </div>
                 </div>
 
