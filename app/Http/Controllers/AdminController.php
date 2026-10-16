@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DelayLog;
+use App\Models\LoginLog;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\User;
@@ -18,6 +19,8 @@ class AdminController extends Controller
         $totalStudents = Student::count();
         $totalCancelledLogs = DelayLog::onlyTrashed()->count();
         $todayCancelledLogs = DelayLog::onlyTrashed()->whereDate('deleted_at', today())->count();
+        $todayLoginLogs = LoginLog::whereDate('created_at', today())->count();
+        $failedLoginAttemptsToday = LoginLog::whereDate('created_at', today())->where('status', 'failed')->count();
 
         // Get today's delay logs with count
         $todayLogs = DelayLog::with(['student' => function ($query) {
@@ -33,6 +36,8 @@ class AdminController extends Controller
             'totalStudents' => $totalStudents,
             'totalCancelledLogs' => $totalCancelledLogs,
             'todayCancelledLogs' => $todayCancelledLogs,
+            'todayLoginLogs' => $todayLoginLogs,
+            'failedLoginAttemptsToday' => $failedLoginAttemptsToday,
             'todayLogs' => $todayLogs,
         ]);
     }
@@ -405,5 +410,79 @@ class AdminController extends Controller
         $log->forceDelete();
 
         return redirect()->back()->with('success', "Log keterlambatan untuk {$studentName} berhasil dimusnahkan secara permanen.");
+    }
+
+    public function loginLogs(Request $request)
+    {
+        $query = LoginLog::query()->orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(user_name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(attempted_login) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(user_email) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(user_role) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(ip_address) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(device) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(failure_reason) LIKE ?', ["%{$search}%"]);
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('role') && $request->role !== 'all') {
+            $query->where('user_role', $request->role);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $logs = $query->paginate(20)->withQueryString();
+
+        return Inertia::render('Admin/LoginLogs', [
+            'loginLogs' => $logs,
+            'filters' => [
+                'search' => $request->search ?? '',
+                'status' => $request->status ?? 'all',
+                'role' => $request->role ?? 'all',
+                'date' => $request->date ?? '',
+            ],
+            'stats' => [
+                'total' => LoginLog::count(),
+                'today' => LoginLog::whereDate('created_at', today())->count(),
+                'failed_today' => LoginLog::whereDate('created_at', today())->where('status', 'failed')->count(),
+                'success_today' => LoginLog::whereDate('created_at', today())->where('status', 'success')->count(),
+            ],
+        ]);
+    }
+
+    public function destroyLoginLog($id)
+    {
+        $log = LoginLog::findOrFail($id);
+        $log->delete();
+
+        return redirect()->back()->with('success', 'Catatan log berhasil dihapus.');
+    }
+
+    public function clearLoginLogs(Request $request)
+    {
+        $scope = $request->input('scope', 'all');
+
+        if ($scope === 'older_30_days') {
+            $deletedCount = LoginLog::where('created_at', '<', now()->subDays(30))->delete();
+            return redirect()->back()->with('success', "Sebanyak {$deletedCount} log yang lebih lama dari 30 hari berhasil dibersihkan.");
+        }
+
+        if ($scope === 'failed_only') {
+            $deletedCount = LoginLog::where('status', 'failed')->delete();
+            return redirect()->back()->with('success', "Sebanyak {$deletedCount} log gagal login berhasil dibersihkan.");
+        }
+
+        LoginLog::query()->delete();
+        return redirect()->back()->with('success', 'Semua riwayat log aktivitas login berhasil dibersihkan.');
     }
 }

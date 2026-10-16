@@ -69,6 +69,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cancellation-logs', [AdminController::class, 'cancellationLogs'])->name('cancellation_logs.index');
     Route::post('/cancellation-logs/{id}/restore', [AdminController::class, 'restoreCancellationLog'])->name('cancellation_logs.restore');
     Route::delete('/cancellation-logs/{id}/force', [AdminController::class, 'forceDeleteCancellationLog'])->name('cancellation_logs.force_delete');
+
+    Route::get('/login-logs', [AdminController::class, 'loginLogs'])->name('login_logs.index');
+    Route::delete('/login-logs/{id}', [AdminController::class, 'destroyLoginLog'])->name('login_logs.destroy');
+    Route::post('/login-logs/clear', [AdminController::class, 'clearLoginLogs'])->name('login_logs.clear');
 });
 
 Route::middleware(['auth', 'role:guru_piket,admin'])->prefix('guru-piket')->name('guru_piket.')->group(function () {

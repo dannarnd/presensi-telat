@@ -59,6 +59,14 @@ class LoginRequest extends FormRequest
         if (! $user) {
             RateLimiter::hit($this->throttleKey());
 
+            \App\Models\LoginLog::record(
+                $this,
+                null,
+                'failed',
+                'Pengguna tidak ditemukan',
+                $login_id
+            );
+
             throw ValidationException::withMessages([
                 'login_id' => 'Username, NIP, atau nama pengguna tidak ditemukan.',
             ]);
@@ -66,6 +74,14 @@ class LoginRequest extends FormRequest
 
         if (! \Illuminate\Support\Facades\Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
+
+            \App\Models\LoginLog::record(
+                $this,
+                $user,
+                'failed',
+                'Kata sandi salah',
+                $login_id
+            );
 
             throw ValidationException::withMessages([
                 'login_id' => 'Kata sandi yang Anda masukkan salah.',
@@ -75,6 +91,14 @@ class LoginRequest extends FormRequest
         Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
+
+        \App\Models\LoginLog::record(
+            $this,
+            $user,
+            'success',
+            null,
+            $login_id
+        );
     }
 
     /**
