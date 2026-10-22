@@ -37,9 +37,15 @@ class ReportController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['schoolClass', 'delayLogs' => function($query) {
-            $query->orderBy('delay_time', 'desc');
-        }]);
+        $student->load([
+            'schoolClass',
+            'delayLogs' => function($query) {
+                $query->orderBy('delay_time', 'desc');
+            },
+            'counselingLogs' => function($query) {
+                $query->with('user')->orderBy('created_at', 'desc');
+            }
+        ]);
 
         return response()->json($student);
     }

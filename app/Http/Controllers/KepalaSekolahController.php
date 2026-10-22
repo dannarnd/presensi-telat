@@ -12,10 +12,16 @@ class KepalaSekolahController extends Controller
 {
     public function index(Request $request)
     {
-        $period = $request->get('period', 'this_month');
+        $period = $request->get('period', 'this_week');
         $now = now();
 
-        if ($period === 'this_month') {
+        if ($period === 'this_week') {
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
+            $prevStartDate = $now->copy()->subWeek()->startOfWeek();
+            $prevEndDate = $now->copy()->subWeek()->endOfWeek();
+            $periodLabel = 'Minggu Ini (' . $startDate->translatedFormat('d M') . ' - ' . $endDate->translatedFormat('d M Y') . ')';
+        } elseif ($period === 'this_month') {
             $startDate = $now->copy()->startOfMonth();
             $endDate = $now->copy()->endOfMonth();
             $prevStartDate = $now->copy()->subMonth()->startOfMonth();
@@ -43,11 +49,11 @@ class KepalaSekolahController extends Controller
                 $periodLabel = 'Semester Genap ' . $now->year;
             }
         } else {
-            $startDate = $now->copy()->startOfMonth();
-            $endDate = $now->copy()->endOfMonth();
-            $prevStartDate = $now->copy()->subMonth()->startOfMonth();
-            $prevEndDate = $now->copy()->subMonth()->endOfMonth();
-            $periodLabel = 'Bulan Ini';
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
+            $prevStartDate = $now->copy()->subWeek()->startOfWeek();
+            $prevEndDate = $now->copy()->subWeek()->endOfWeek();
+            $periodLabel = 'Minggu Ini';
         }
 
         $query = DelayLog::whereBetween('created_at', [$startDate, $endDate]);
@@ -78,15 +84,13 @@ class KepalaSekolahController extends Controller
 
         $totalNeedBK = $studentsNeedingBK->count();
 
-        // Among those students, how many have been resolved by BK
-        $resolvedLogs = DB::table('delay_logs')
+        // Among those students, how many have counseling logs recorded by BK
+        $resolvedLogs = DB::table('counseling_logs')
             ->whereIn('student_id', $studentsNeedingBK)
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'resolved')
             ->distinct('student_id')
             ->count('student_id');
 
-        $activeLogs = $totalNeedBK - $resolvedLogs;
+        $activeLogs = max(0, $totalNeedBK - $resolvedLogs);
         $resolutionRate = $totalNeedBK > 0 ? round(($resolvedLogs / $totalNeedBK) * 100) : 0;
 
         // 4. Class Distribution (Doughnut) - count unique students
@@ -127,6 +131,35 @@ class KepalaSekolahController extends Controller
             ->limit(10)
             ->get();
 
+        // Attach counseling status to Wall of Shame students
+        $studentIds = $wallOfShame->pluck('id');
+        $counselingSummaries = DB::table('counseling_logs')
+            ->whereIn('student_id', $studentIds)
+            ->select(
+                'student_id',
+                DB::raw('COUNT(id) as counseling_count'),
+                DB::raw('MAX(created_at) as last_counseling_at')
+            )
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
+        $latestCounselings = DB::table('counseling_logs')
+            ->whereIn('student_id', $studentIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('student_id')
+            ->keyBy('student_id');
+
+        foreach ($wallOfShame as $student) {
+            $summary = $counselingSummaries->get($student->id);
+            $latest = $latestCounselings->get($student->id);
+            $student->counseling_count = $summary ? (int) $summary->counseling_count : 0;
+            $student->last_counseling_at = $summary ? $summary->last_counseling_at : null;
+            $student->last_counselor_name = $latest ? $latest->counselor_name : null;
+            $student->last_counseling_notes = $latest ? $latest->notes : null;
+        }
+
         // 7. Most Problematic Class
         $mostProblematicClass = $classDistribution->first();
         if ($mostProblematicClass) {
@@ -162,11 +195,14 @@ class KepalaSekolahController extends Controller
 
     public function exportPdf(Request $request)
     {
-        // For simplicity, we reuse the same logic
-        $period = $request->get('period', 'this_month');
+        $period = $request->get('period', 'this_week');
         $now = now();
 
-        if ($period === 'this_month') {
+        if ($period === 'this_week') {
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
+            $periodLabel = 'Minggu Ini (' . $startDate->translatedFormat('d M') . ' - ' . $endDate->translatedFormat('d M Y') . ')';
+        } elseif ($period === 'this_month') {
             $startDate = $now->copy()->startOfMonth();
             $endDate = $now->copy()->endOfMonth();
             $periodLabel = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
@@ -186,9 +222,9 @@ class KepalaSekolahController extends Controller
                 $periodLabel = 'Semester Genap ' . $now->year;
             }
         } else {
-            $startDate = $now->copy()->startOfMonth();
-            $endDate = $now->copy()->endOfMonth();
-            $periodLabel = 'Bulan Ini';
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
+            $periodLabel = 'Minggu Ini';
         }
 
         $query = DelayLog::whereBetween('created_at', [$startDate, $endDate]);
@@ -221,10 +257,13 @@ class KepalaSekolahController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $period = $request->get('period', 'this_month');
+        $period = $request->get('period', 'this_week');
         $now = now();
 
-        if ($period === 'this_month') {
+        if ($period === 'this_week') {
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
+        } elseif ($period === 'this_month') {
             $startDate = $now->copy()->startOfMonth();
             $endDate = $now->copy()->endOfMonth();
         } elseif ($period === 'last_month') {
@@ -240,8 +279,8 @@ class KepalaSekolahController extends Controller
                 $endDate = $now->copy()->month(6)->endOfMonth();
             }
         } else {
-            $startDate = $now->copy()->startOfMonth();
-            $endDate = $now->copy()->endOfMonth();
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
         }
 
         $logs = DB::table('delay_logs')

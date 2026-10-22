@@ -10,7 +10,7 @@ class GuruBKController extends Controller
 {
     public function index()
     {
-        // Get all students with their active delay count
+        // Get all students who have ever been late, with delay logs and counseling logs
         $students = Student::with([
             'schoolClass', 
             'delayLogs' => function($q) {
@@ -21,9 +21,9 @@ class GuruBKController extends Controller
             }
         ])
             ->where('status', 'active')
-            ->withCount('activeDelayLogs')
-            ->has('activeDelayLogs', '>', 0)
-            ->orderBy('active_delay_logs_count', 'desc')
+            ->withCount(['delayLogs', 'activeDelayLogs', 'counselingLogs'])
+            ->has('delayLogs', '>', 0)
+            ->orderBy('delay_logs_count', 'desc')
             ->get();
 
         return Inertia::render('GuruBK/Dashboard', [
@@ -57,12 +57,8 @@ class GuruBKController extends Controller
                 'counselor_name' => $request->counselor_name,
                 'notes' => $request->notes,
             ]);
-
-            \App\Models\DelayLog::where('student_id', $request->student_id)
-                ->where('status', 'active')
-                ->update(['status' => 'resolved']);
         });
 
-        return redirect()->back()->with('success', 'Tindak lanjut BK berhasil disimpan, dan peringatan keterlambatan telah direset.');
+        return redirect()->back()->with('success', 'Catatan tindak lanjut bimbingan konseling berhasil disimpan.');
     }
 }

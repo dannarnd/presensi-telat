@@ -340,7 +340,10 @@ const getRoleBadge = (userRole) => {
                                                 <span :class="['px-2 py-0.5 rounded text-[10px] font-bold border', getRoleBadge(log.user_role).class]">
                                                     {{ getRoleBadge(log.user_role).label }}
                                                 </span>
-                                                <span v-if="log.user_email" class="text-xs text-slate-400">
+                                                <span v-if="log.attempted_login" class="text-xs font-mono font-medium text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                                    ID: {{ log.attempted_login }}
+                                                </span>
+                                                <span v-else-if="log.user_email && !log.user_email.endsWith('@sekolah.com')" class="text-xs text-slate-400">
                                                     {{ log.user_email }}
                                                 </span>
                                             </div>

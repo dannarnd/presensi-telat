@@ -25,19 +25,39 @@ const generateWaLink = (student) => {
         phone = '62' + phone.substring(1);
     }
 
-    //*+*+*+*+*+*+*+* ISI pesan untuk wa otomatis dikirim ke orang tua
-    const message = `Selamat pagi Bapak/Ibu, kami dari pihak Bimbingan Konseling (BK) SMKN 5 Telkom menginformasikan bahwa ananda ${student.name} dari kelas ${student.school_class?.name} telah tercatat datang terlambat sebanyak ${student.active_delay_logs_count || 0} kali. Mohon kehadirannya di sekolah untuk mendiskusikan kedisiplinan ananda. Terima kasih.`;
+    const lateCount = student.delay_logs_count ?? student.active_delay_logs_count ?? 0;
+    let message = '';
+    
+    if (lateCount >= 5) {
+        message = `Selamat pagi/siang Bapak/Ibu Wali Murid dari ananda ${student.name} (Kelas ${student.school_class?.name || '-'}).\n\nKami dari pihak Bimbingan Konseling (BK) memberitahukan bahwa ananda telah tercatat datang terlambat sebanyak ${lateCount} kali. Mengingat jumlah keterlambatan sudah melampaui batas toleransi (Tahap Panggilan Orang Tua), kami mengundang Bapak/Ibu untuk hadir ke ruang BK sekolah guna mendiskusikan kedisiplinan dan pembinaan ananda.\n\nAtas perhatian dan kerja samanya, kami ucapkan terima kasih.`;
+    } else {
+        message = `Selamat pagi/siang Bapak/Ibu Wali Murid dari ananda ${student.name} (Kelas ${student.school_class?.name || '-'}).\n\nKami dari pihak Bimbingan Konseling (BK) menginformasikan bahwa ananda telah tercatat datang terlambat sebanyak ${lateCount} kali. Mohon pendampingan Bapak/Ibu di rumah agar ananda dapat hadir tepat waktu di sekolah.\n\nTerima kasih.`;
+    }
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
 
-const getWarningBadge = (count) => {
-    if (count >= 5) {
-        return { class: 'bg-red-100 text-red-800 border-red-200', text: 'Sangat Sering (Panggil Ortu)' };
-    } else if (count >= 3) {
-        return { class: 'bg-orange-100 text-orange-800 border-orange-200', text: 'Sering (Peringatan)' };
-    } else if (count > 0) {
-        return { class: 'bg-yellow-100 text-yellow-800 border-yellow-200', text: 'Pernah Telat' };
+const getWarningBadge = (student) => {
+    const lateCount = student?.delay_logs_count ?? student?.total_late ?? (typeof student === 'number' ? student : 0);
+    const counselingCount = student?.counseling_logs_count ?? student?.counseling_logs?.length ?? 0;
+
+    if (lateCount >= 6) {
+        if (counselingCount >= 2) {
+            return { class: 'bg-purple-100 text-purple-800 border-purple-200', text: `SP / Kasus Berat (${counselingCount}x Bimbingan)` };
+        }
+        return { class: 'bg-purple-600 text-white border-purple-700 animate-pulse', text: 'Perlu Konferensi Kasus / SP' };
+    } else if (lateCount >= 5) {
+        if (counselingCount >= 2) {
+            return { class: 'bg-emerald-100 text-emerald-800 border-emerald-200', text: 'Panggilan Ortu Selesai' };
+        }
+        return { class: 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse', text: 'Wajib Panggilan Ortu (Tahap 2)' };
+    } else if (lateCount >= 3) {
+        if (counselingCount >= 1) {
+            return { class: 'bg-blue-100 text-blue-800 border-blue-200', text: 'Bimbingan Siswa Selesai' };
+        }
+        return { class: 'bg-amber-100 text-amber-800 border-amber-300', text: 'Wajib Bimbingan Siswa (Tahap 1)' };
+    } else if (lateCount > 0) {
+        return { class: 'bg-slate-100 text-slate-700 border-slate-200', text: 'Pembinaan Ringan' };
     }
     return { class: 'bg-green-100 text-green-800 border-green-200', text: 'Aman' };
 };
@@ -108,7 +128,7 @@ const submitCounseling = () => {
                         yang pernah terlambat, diurutkan dari yang paling sering melanggar. Gunakan tombol <span
                             class="bg-blue-500 text-white px-2 py-0.5 rounded text-xs font-bold mx-1">Tindak
                             Lanjut</span> untuk
-                        menyelesaikan kasus siswa, yang akan me-reset peringatan mereka kembali ke nol.
+                        mencatat rekam bimbingan konseling dan pemanggilan orang tua secara permanen tanpa menghilangkan riwayat keterlambatan siswa.
                     </p>
                 </div>
                 <div
@@ -158,7 +178,7 @@ const submitCounseling = () => {
                                 </th>
                                 <th
                                     class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Total Telat Aktif</th>
+                                    Total Telat & Status</th>
                                 <th
                                     class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     Aksi
@@ -176,12 +196,12 @@ const submitCounseling = () => {
                                     }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <div class="text-2xl font-black text-slate-800 mb-1">{{
-                                        student.active_delay_logs_count }}
+                                    <div class="text-2xl font-black text-slate-800 mb-1">
+                                        {{ student.delay_logs_count }}x
                                     </div>
                                     <span
-                                        :class="['px-2 py-0.5 inline-flex text-xs font-bold rounded-full border', getWarningBadge(student.active_delay_logs_count).class]">
-                                        {{ getWarningBadge(student.active_delay_logs_count).text }}
+                                        :class="['px-2.5 py-1 inline-flex text-xs font-bold rounded-full border', getWarningBadge(student).class]">
+                                        {{ getWarningBadge(student).text }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
@@ -322,9 +342,11 @@ const submitCounseling = () => {
                     </div>
 
                     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
-                        <p class="text-sm text-blue-800 font-medium">
-                            Anda akan menyelesaikan kasus untuk <strong>{{ studentToCounsel?.name }}</strong>.
-                            Tindakan ini akan me-reset jumlah peringatan aktif siswa ini kembali menjadi 0.
+                        <p class="text-sm text-blue-900 font-medium">
+                            Anda akan mencatat rekam bimbingan konseling untuk <strong>{{ studentToCounsel?.name }}</strong> (Total Keterlambatan: {{ studentToCounsel?.delay_logs_count }}x).
+                        </p>
+                        <p class="text-xs text-blue-700 mt-1">
+                            Catatan ini akan langsung tersimpan di rekam jejak bimbingan siswa dan dapat ditinjau oleh Kepala Sekolah di menu Analisa.
                         </p>
                     </div>
 
@@ -347,7 +369,7 @@ const submitCounseling = () => {
                                 <span class="text-red-500">*</span></label>
                             <textarea v-model="counselingForm.notes" rows="4"
                                 class="w-full rounded-xl border-slate-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm text-sm"
-                                placeholder="Misal: Orang tua sudah dipanggil ke ruang BK, siswa membuat surat komitmen tidak terlambat lagi..."
+                                placeholder="Misal: Siswa telah diberikan bimbingan tahap 1 / Orang tua telah hadir ke ruang BK membuat surat komitmen..."
                                 required></textarea>
                             <p v-if="counselingForm.errors.notes" class="mt-1 text-sm text-red-600">{{
                                 counselingForm.errors.notes }}</p>
@@ -364,7 +386,7 @@ const submitCounseling = () => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7" />
                                 </svg>
-                                {{ counselingForm.processing ? 'Menyimpan...' : 'Simpan & Selesaikan Kasus' }}
+                                {{ counselingForm.processing ? 'Menyimpan...' : 'Simpan Rekam Konseling' }}
                             </button>
                         </div>
                     </form>
