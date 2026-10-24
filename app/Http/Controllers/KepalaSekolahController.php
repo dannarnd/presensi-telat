@@ -12,7 +12,7 @@ class KepalaSekolahController extends Controller
 {
     public function index(Request $request)
     {
-        $period = $request->get('period', 'this_week');
+        $period = $request->get('period', 'this_month');
         $now = now();
 
         if ($period === 'this_week') {
@@ -195,7 +195,7 @@ class KepalaSekolahController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $period = $request->get('period', 'this_week');
+        $period = $request->get('period', 'this_month');
         $now = now();
 
         if ($period === 'this_week') {
@@ -222,9 +222,9 @@ class KepalaSekolahController extends Controller
                 $periodLabel = 'Semester Genap ' . $now->year;
             }
         } else {
-            $startDate = $now->copy()->startOfWeek();
-            $endDate = $now->copy()->endOfWeek();
-            $periodLabel = 'Minggu Ini';
+            $startDate = $now->copy()->startOfMonth();
+            $endDate = $now->copy()->endOfMonth();
+            $periodLabel = 'Bulan Ini';
         }
 
         $query = DelayLog::whereBetween('created_at', [$startDate, $endDate]);
@@ -257,7 +257,7 @@ class KepalaSekolahController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $period = $request->get('period', 'this_week');
+        $period = $request->get('period', 'this_month');
         $now = now();
 
         if ($period === 'this_week') {
@@ -279,8 +279,8 @@ class KepalaSekolahController extends Controller
                 $endDate = $now->copy()->month(6)->endOfMonth();
             }
         } else {
-            $startDate = $now->copy()->startOfWeek();
-            $endDate = $now->copy()->endOfWeek();
+            $startDate = $now->copy()->startOfMonth();
+            $endDate = $now->copy()->endOfMonth();
         }
 
         $logs = DB::table('delay_logs')

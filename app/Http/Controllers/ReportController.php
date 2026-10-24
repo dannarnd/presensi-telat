@@ -11,7 +11,7 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Student::with('schoolClass')->withCount(['delayLogs', 'activeDelayLogs']);
+        $query = Student::with('schoolClass')->withCount(['delayLogs', 'activeDelayLogs', 'counselingLogs']);
 
         if ($request->filled('class_id')) {
             $query->where('school_class_id', $request->class_id);

@@ -98,7 +98,15 @@ const printHistory = () => {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="font-bold text-slate-800">{{ log.student?.name }}</div>
-                                    <div class="text-sm font-medium text-blue-600">{{ log.student?.school_class?.name }}</div>
+                                    <div class="text-xs font-semibold text-slate-500">{{ log.student?.school_class?.name }}</div>
+                                    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            {{ log.stage || 'Bimbingan Konseling' }}
+                                        </span>
+                                        <span v-if="log.delay_count" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                            Telat ke-{{ log.delay_count }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-slate-600 max-w-md whitespace-pre-wrap">
                                     {{ log.notes }}

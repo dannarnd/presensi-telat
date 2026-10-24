@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CounselingLog extends Model
 {
-    protected $fillable = ['student_id', 'user_id', 'counselor_name', 'notes'];
+    protected $fillable = ['student_id', 'user_id', 'counselor_name', 'notes', 'delay_count', 'stage'];
 
     public function student()
     {

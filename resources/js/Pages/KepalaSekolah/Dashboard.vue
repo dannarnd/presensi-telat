@@ -106,6 +106,11 @@ const openDetail = async (student) => {
         isLoadingDetail.value = false;
     }
 };
+
+const getCounselingBadge = (student, delayNumber) => {
+    if (!student || !student.counseling_logs) return null;
+    return student.counseling_logs.find(c => c.delay_count === delayNumber);
+};
 </script>
 
 <template>
@@ -346,19 +351,27 @@ const openDetail = async (student) => {
 
                                 <div v-if="selectedStudentDetail.counseling_logs && selectedStudentDetail.counseling_logs.length > 0" class="space-y-3">
                                     <div v-for="cLog in selectedStudentDetail.counseling_logs" :key="cLog.id"
-                                        class="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-sm space-y-1.5">
+                                        class="p-4 bg-indigo-50/70 rounded-xl border border-indigo-100 text-sm space-y-1.5">
                                         <div class="flex justify-between items-start">
-                                            <div class="flex items-center gap-1.5 font-bold text-indigo-900 text-xs">
-                                                <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                                Guru BK: {{ cLog.counselor_name || cLog.user?.name || 'Guru BK' }}
+                                            <div>
+                                                <div class="flex items-center gap-2 font-bold text-indigo-900 text-xs">
+                                                    <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    {{ cLog.stage || 'Bimbingan Konseling' }}
+                                                    <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                                        Ditindak saat Telat ke-{{ cLog.delay_count || '?' }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-[11px] text-slate-500 font-medium mt-0.5 ml-6">
+                                                    Guru BK: <strong>{{ cLog.counselor_name || cLog.user?.name || 'Guru BK' }}</strong>
+                                                </div>
                                             </div>
-                                            <span class="text-xs text-slate-500 font-medium">
+                                            <span class="text-xs text-slate-500 font-medium bg-white px-2 py-0.5 rounded-md border border-slate-200">
                                                 {{ new Date(cLog.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
                                             </span>
                                         </div>
-                                        <p class="text-slate-700 text-xs leading-relaxed whitespace-pre-wrap pl-5 border-l-2 border-indigo-200">{{ cLog.notes }}</p>
+                                        <p class="text-slate-700 text-xs leading-relaxed whitespace-pre-wrap pl-6 border-l-2 border-indigo-300">{{ cLog.notes }}</p>
                                     </div>
                                 </div>
                                 <div v-else-if="(selectedStudentDetail.delay_logs && selectedStudentDetail.delay_logs.length >= 3) || selectedStudentDetail.total_late >= 3"
@@ -380,11 +393,9 @@ const openDetail = async (student) => {
                             <div>
                                 <h4 class="font-bold text-slate-800 text-sm mb-3">Timeline Riwayat Keterlambatan</h4>
                                 <div v-if="selectedStudentDetail.delay_logs && selectedStudentDetail.delay_logs.length > 0" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                                    <div v-for="log in selectedStudentDetail.delay_logs" :key="log.id" class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-blue-100 text-blue-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                    <div v-for="(log, logIdx) in selectedStudentDetail.delay_logs" :key="log.id" class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-blue-100 text-blue-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 font-black text-xs">
+                                            {{ selectedStudentDetail.delay_logs.length - logIdx }}
                                         </div>
                                         <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl shadow-sm border border-slate-100">
                                             <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-1">
@@ -393,6 +404,28 @@ const openDetail = async (student) => {
                                             </div>
                                             <div class="text-slate-600 text-sm">Alasan: <strong>{{ log.reason }}</strong></div>
                                             <div class="text-slate-500 text-xs mt-1 font-medium italic" v-if="log.reporter_name">Petugas: {{ log.reporter_name }}</div>
+
+                                            <!-- Indikator Tindak Lanjut BK -->
+                                            <div v-if="getCounselingBadge(selectedStudentDetail, selectedStudentDetail.delay_logs.length - logIdx)"
+                                                class="mt-3 pt-2.5 border-t border-indigo-100 bg-indigo-50/60 p-2.5 rounded-lg space-y-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="inline-flex items-center text-xs font-black text-indigo-800">
+                                                        <svg class="w-3.5 h-3.5 mr-1 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        {{ getCounselingBadge(selectedStudentDetail, selectedStudentDetail.delay_logs.length - logIdx).stage || 'Ditindaklanjuti BK' }}
+                                                    </span>
+                                                    <span class="text-[11px] text-slate-500 font-medium">
+                                                        {{ new Date(getCounselingBadge(selectedStudentDetail, selectedStudentDetail.delay_logs.length - logIdx).created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-[11px] text-indigo-950 italic line-clamp-2">
+                                                    "{{ getCounselingBadge(selectedStudentDetail, selectedStudentDetail.delay_logs.length - logIdx).notes }}"
+                                                </div>
+                                                <div class="text-[10px] text-indigo-600 font-bold">
+                                                    Oleh: {{ getCounselingBadge(selectedStudentDetail, selectedStudentDetail.delay_logs.length - logIdx).counselor_name || 'Guru BK' }}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

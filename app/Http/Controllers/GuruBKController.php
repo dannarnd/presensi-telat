@@ -51,11 +51,22 @@ class GuruBKController extends Controller
         ]);
 
         \DB::transaction(function () use ($request) {
+            $delayCount = \App\Models\DelayLog::where('student_id', $request->student_id)->count();
+            $stage = $delayCount >= 6 
+                ? 'Tahap 3 (Konferensi Kasus / SP)' 
+                : ($delayCount >= 5 
+                    ? 'Tahap 2 (Panggilan Orang Tua)' 
+                    : ($delayCount >= 3 
+                        ? 'Tahap 1 (Bimbingan Siswa)' 
+                        : 'Pembinaan Ringan'));
+
             \App\Models\CounselingLog::create([
                 'student_id' => $request->student_id,
                 'user_id' => auth()->id(),
                 'counselor_name' => $request->counselor_name,
                 'notes' => $request->notes,
+                'delay_count' => $delayCount,
+                'stage' => $stage,
             ]);
         });
 
