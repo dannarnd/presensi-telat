@@ -10,14 +10,8 @@ const props = defineProps({
 });
 
 const searchQuery = ref('');
-const filteredStudents = computed(() => {
-    if (!searchQuery.value) return props.students;
-    const q = searchQuery.value.toLowerCase();
-    return props.students.filter(student =>
-        student.name.toLowerCase().includes(q) ||
-        student.nisn.toLowerCase().includes(q)
-    );
-});
+const activeTab = ref('all'); // 'all' | 'needs_action' | 'resolved' | 'light'
+const detailTab = ref('delays'); // 'delays' | 'counseling'
 
 import { router } from '@inertiajs/vue3';
 
@@ -25,7 +19,200 @@ const onClassChange = (event) => {
     router.get(route('wali_kelas.dashboard'), { class_id: event.target.value }, { preserveState: true });
 };
 
-// Fungsi ini meng-generate pesan WA (ini adalah file yang Anda cari)
+// Helper status penyelesaian bimbingan BK
+const isTahap3Done = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0) return false;
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+    const lastStage = latest?.stage ?? '';
+    const count = logs.length;
+
+    if (lastDelay >= late) return true;
+    if (lastStage.includes('Tahap 3') || lastStage.includes('Konferensi') || lastStage.includes('SP')) return true;
+    if (count >= 3) return true;
+    return false;
+};
+
+const isTahap2Done = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0) return false;
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+    const lastStage = latest?.stage ?? '';
+    const count = logs.length;
+
+    if (lastDelay >= late) return true;
+    if (lastStage.includes('Tahap 2') || lastStage.includes('Panggilan') || isTahap3Done(student)) return true;
+    if (count >= 2) return true;
+    return false;
+};
+
+const isTahap1Done = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0) return false;
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+    const count = logs.length;
+
+    if (lastDelay >= late) return true;
+    if (count >= 1) return true;
+    return false;
+};
+
+const isStudentNeedsAction = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    if (late < 3) return false;
+
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0) return true;
+
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+
+    if (lastDelay >= late) return false;
+
+    if (late >= 6) {
+        if (!isTahap3Done(student)) return true;
+        if (lastDelay > 0 && late > lastDelay) return true;
+        return false;
+    }
+    if (late >= 5) {
+        if (!isTahap2Done(student)) return true;
+        if (lastDelay > 0 && late > lastDelay) return true;
+        return false;
+    }
+    if (late >= 3) {
+        return !isTahap1Done(student);
+    }
+    return false;
+};
+
+const getBKStatus = (student) => {
+    const late = student?.delay_logs_count || 0;
+    const logs = student?.counseling_logs || [];
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count || 0;
+    const counselor = latest?.counselor_name;
+
+    if (late < 3) {
+        return {
+            status: 'light',
+            badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+            text: 'Pembinaan Wali Kelas / Piket',
+            subtext: 'Pelanggaran ringan 1–2x'
+        };
+    }
+
+    if (late >= 6) {
+        if (isTahap3Done(student)) {
+            if (lastDelay > 0 && late > lastDelay) {
+                return {
+                    status: 'urgent',
+                    badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
+                    text: `Telat Pasca-SP (+${late - lastDelay}x)`,
+                    subtext: counselor ? `SP oleh: ${counselor} (Telat ke-${lastDelay})` : null
+                };
+            }
+            return {
+                status: 'resolved',
+                badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold',
+                text: `Konferensi Kasus / SP Selesai (${logs.length}x Bimbingan)`,
+                subtext: counselor ? `Oleh: ${counselor} • Telat ke-${lastDelay}` : null
+            };
+        }
+        return {
+            status: 'urgent',
+            badgeClass: 'bg-purple-100 text-purple-800 border-purple-300 font-bold animate-pulse',
+            text: 'Wajib Konferensi Kasus (Tahap 3)',
+            subtext: counselor ? `Tahap sebelumnya: ${counselor}` : 'Perlu konferensi kasus & SP'
+        };
+    }
+
+    if (late >= 5) {
+        if (isTahap2Done(student)) {
+            if (lastDelay > 0 && late > lastDelay) {
+                return {
+                    status: 'urgent',
+                    badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
+                    text: `Telat Pasca-Panggilan (+${late - lastDelay}x)`,
+                    subtext: counselor ? `Panggilan oleh: ${counselor} (Telat ke-${lastDelay})` : null
+                };
+            }
+            return {
+                status: 'resolved',
+                badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold',
+                text: `Panggilan Ortu Selesai (${logs.length}x Bimbingan)`,
+                subtext: counselor ? `Oleh: ${counselor} • Telat ke-${lastDelay}` : null
+            };
+        }
+        return {
+            status: 'warning',
+            badgeClass: 'bg-rose-100 text-rose-700 border-rose-200 font-bold animate-pulse',
+            text: 'Wajib Panggilan Ortu (Tahap 2)',
+            subtext: counselor ? `Tahap sebelumnya: ${counselor}` : 'Menunggu surat/tindakan BK'
+        };
+    }
+
+    if (late >= 3) {
+        if (isTahap1Done(student)) {
+            return {
+                status: 'resolved',
+                badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 font-bold',
+                text: `Bimbingan Siswa Selesai (${logs.length}x Bimbingan)`,
+                subtext: counselor ? `Oleh: ${counselor} • Telat ke-${lastDelay}` : null
+            };
+        }
+        return {
+            status: 'warning',
+            badgeClass: 'bg-amber-100 text-amber-800 border-amber-200 font-bold',
+            text: 'Wajib Bimbingan Siswa (Tahap 1)',
+            subtext: 'Menunggu pembinaan Guru BK'
+        };
+    }
+
+    return {
+        status: 'light',
+        badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+        text: 'Aman',
+        subtext: null
+    };
+};
+
+const needsActionStudents = computed(() => {
+    return (props.students || []).filter(s => isStudentNeedsAction(s));
+});
+
+const resolvedStudents = computed(() => {
+    return (props.students || []).filter(s => !isStudentNeedsAction(s) && (s.delay_logs_count || 0) >= 3);
+});
+
+const lightStudents = computed(() => {
+    return (props.students || []).filter(s => (s.delay_logs_count || 0) < 3);
+});
+
+const filteredStudents = computed(() => {
+    let list = props.students || [];
+    if (activeTab.value === 'needs_action') {
+        list = needsActionStudents.value;
+    } else if (activeTab.value === 'resolved') {
+        list = resolvedStudents.value;
+    } else if (activeTab.value === 'light') {
+        list = lightStudents.value;
+    }
+
+    if (!searchQuery.value) return list;
+    const q = searchQuery.value.toLowerCase();
+    return list.filter(student =>
+        student.name.toLowerCase().includes(q) ||
+        student.nisn.toLowerCase().includes(q)
+    );
+});
+
+// Fungsi ini meng-generate pesan WA
 const generateWaLink = (student) => {
     if (!student.no_wa_ortu) return '#';
 
@@ -34,9 +221,7 @@ const generateWaLink = (student) => {
         phone = '62' + phone.substring(1);
     }
 
-    // PESAN WA DI BAWAH INI ---
     const message = `Selamat pagi Bapak/Ibu, kami dari pihak sekolah menginformasikan bahwa ananda ${student.name} hingga saat ini telah tercatat datang terlambat sebanyak ${student.delay_logs_count} kali. Mohon kerjasamanya untuk membimbing ananda agar lebih disiplin dan tidak terlambat lagi di kemudian hari. Terima kasih.`;
-    // ----------------------------------
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
@@ -58,6 +243,7 @@ const selectedStudent = ref(null);
 
 const openDetail = (student) => {
     selectedStudent.value = student;
+    detailTab.value = 'delays';
     showDetailModal.value = true;
 };
 </script>
@@ -117,11 +303,60 @@ const openDetail = (student) => {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <div
-                            class="bg-blue-100 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-sm whitespace-nowrap">
-                            {{ filteredStudents.length }} Siswa
-                        </div>
                     </div>
+                </div>
+
+                <!-- Navigation Tabs Kategori BK untuk Wali Kelas -->
+                <div class="px-6 pt-3 border-b border-slate-100 flex flex-wrap items-center gap-2 bg-slate-50/70">
+                    <button @click="activeTab = 'all'"
+                        :class="['px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2',
+                            activeTab === 'all' 
+                                ? 'bg-white text-blue-700 border-blue-600 shadow-sm' 
+                                : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/70']">
+                        Semua Siswa Pernah Telat
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                            :class="activeTab === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'">
+                            {{ (props.students || []).length }}
+                        </span>
+                    </button>
+
+                    <button @click="activeTab = 'needs_action'"
+                        :class="['px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2',
+                            activeTab === 'needs_action' 
+                                ? 'bg-white text-rose-700 border-rose-600 shadow-sm' 
+                                : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/70']">
+                        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                        Perlu Tindakan BK (Belum Tuntas)
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                            :class="activeTab === 'needs_action' ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-600'">
+                            {{ needsActionStudents.length }}
+                        </span>
+                    </button>
+
+                    <button @click="activeTab = 'resolved'"
+                        :class="['px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2',
+                            activeTab === 'resolved' 
+                                ? 'bg-white text-emerald-700 border-emerald-600 shadow-sm' 
+                                : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/70']">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Sudah Ditindaklanjuti BK (Tuntas)
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                            :class="activeTab === 'resolved' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                            {{ resolvedStudents.length }}
+                        </span>
+                    </button>
+
+                    <button @click="activeTab = 'light'"
+                        :class="['px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2',
+                            activeTab === 'light' 
+                                ? 'bg-white text-amber-700 border-amber-600 shadow-sm' 
+                                : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/70']">
+                        Pembinaan Wali Kelas (1–2x)
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                            :class="activeTab === 'light' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'">
+                            {{ lightStudents.length }}
+                        </span>
+                    </button>
                 </div>
 
                 <div class="overflow-x-auto p-0 flex-1">
@@ -141,6 +376,10 @@ const openDetail = (student) => {
                                     Total Telat</th>
                                 <th
                                     class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Status Tindak Lanjut BK
+                                </th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     Aksi
                                 </th>
                             </tr>
@@ -156,16 +395,25 @@ const openDetail = (student) => {
                                     }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <div class="text-2xl font-black text-slate-800 mb-1">{{ student.delay_logs_count }}
+                                    <div class="text-2xl font-black text-slate-800 mb-1">{{ student.delay_logs_count }}x
                                     </div>
                                     <span
                                         :class="['px-2 py-0.5 inline-flex text-xs font-bold rounded-full border', getWarningBadge(student.delay_logs_count).class]">
                                         {{ getWarningBadge(student.delay_logs_count).text }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span :class="['px-2.5 py-1 inline-flex text-xs font-bold rounded-full border', getBKStatus(student).badgeClass]">
+                                        {{ getBKStatus(student).text }}
+                                    </span>
+                                    <div v-if="getBKStatus(student).subtext" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center justify-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full inline-block shrink-0" :class="getBKStatus(student).status === 'resolved' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+                                        <span>{{ getBKStatus(student).subtext }}</span>
+                                    </div>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
                                     <button @click="openDetail(student)"
-                                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-bold rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors">
+                                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-bold rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors shadow-sm active:scale-95">
                                         Rincian
                                     </button>
                                     <a v-if="student.no_wa_ortu" :href="generateWaLink(student)" target="_blank"
@@ -182,7 +430,7 @@ const openDetail = (student) => {
                                 </td>
                             </tr>
                             <tr v-if="filteredStudents.length === 0">
-                                <td colspan="4" class="px-6 py-12 text-center">
+                                <td colspan="5" class="px-6 py-12 text-center">
                                     <div
                                         class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
                                         <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24"
@@ -192,7 +440,7 @@ const openDetail = (student) => {
                                         </svg>
                                     </div>
                                     <p class="text-slate-500 font-medium">
-                                        {{ searchQuery ? 'Pencarian tidak ditemukan.' : 'Luar biasa! Seluruh anak didik Anda tidak pernah terlambat.' }}
+                                        {{ searchQuery ? 'Pencarian tidak ditemukan.' : 'Tidak ada data siswa pada kategori ini.' }}
                                     </p>
                                 </td>
                             </tr>
@@ -214,7 +462,7 @@ const openDetail = (student) => {
                             <img src="/images/logo.png" alt="Logo SMK" class="h-12 w-auto object-contain">
                             <div>
                                 <h3 class="text-xl font-bold text-slate-800">{{ selectedStudent?.name }}</h3>
-                                <p class="text-sm text-slate-500 font-medium">Riwayat Keterlambatan</p>
+                                <p class="text-sm text-slate-500 font-medium">Kelas: {{ selectedStudent?.school_class?.name || '-' }} &bull; Total Telat: {{ selectedStudent?.delay_logs_count }}x</p>
                             </div>
                         </div>
                         <button @click="showDetailModal = false"
@@ -226,8 +474,27 @@ const openDetail = (student) => {
                         </button>
                     </div>
 
+                    <!-- Tab Switcher in Modal -->
+                    <div class="flex border-b border-slate-200 bg-white px-6">
+                        <button @click="detailTab = 'delays'"
+                            :class="['py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2',
+                                detailTab === 'delays' 
+                                    ? 'border-blue-600 text-blue-600' 
+                                    : 'border-transparent text-slate-500 hover:text-slate-700']">
+                            Riwayat Keterlambatan ({{ selectedStudent?.delay_logs?.length || 0 }})
+                        </button>
+                        <button @click="detailTab = 'counseling'"
+                            :class="['py-3 px-4 text-xs font-bold border-b-2 transition-all flex items-center gap-2',
+                                detailTab === 'counseling' 
+                                    ? 'border-indigo-600 text-indigo-600' 
+                                    : 'border-transparent text-slate-500 hover:text-slate-700']">
+                            Catatan Bimbingan BK ({{ selectedStudent?.counseling_logs?.length || 0 }})
+                        </button>
+                    </div>
+
                     <div class="p-6 overflow-y-auto flex-1 bg-slate-50/50">
-                        <div
+                        <!-- Tab 1: Riwayat Telat -->
+                        <div v-if="detailTab === 'delays'"
                             class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
                             <div v-for="log in selectedStudent.delay_logs" :key="log.id"
                                 class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
@@ -258,6 +525,42 @@ const openDetail = (student) => {
                                     <div class="text-slate-600 text-sm">Alasan: <strong>{{ log.reason }}</strong></div>
                                     <div class="text-slate-500 text-xs mt-1 font-medium italic" v-if="log.reporter_name">Petugas: {{ log.reporter_name }}</div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Catatan Bimbingan BK -->
+                        <div v-else-if="detailTab === 'counseling'">
+                            <div v-if="selectedStudent?.counseling_logs && selectedStudent.counseling_logs.length > 0" class="space-y-4">
+                                <div v-for="counseling in selectedStudent.counseling_logs" :key="counseling.id" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                    <div class="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                {{ counseling.stage || 'Bimbingan Konseling' }}
+                                            </span>
+                                            <span v-if="counseling.delay_count" class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                                Saat Telat ke-{{ counseling.delay_count }}
+                                            </span>
+                                        </div>
+                                        <span class="text-xs text-slate-400 font-medium">
+                                            {{ new Date(counseling.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                        {{ counseling.notes }}
+                                    </p>
+                                    <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                                        <span>Konselor / Guru BK: <strong class="text-slate-800">{{ counseling.counselor_name }}</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-10 bg-white rounded-xl border border-dashed border-slate-200 p-6">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <h4 class="text-sm font-bold text-slate-700">Belum Ada Catatan Bimbingan BK</h4>
+                                <p class="text-xs text-slate-500 mt-1">Siswa ini belum memiliki riwayat bimbingan konseling yang dicatat oleh Guru BK.</p>
                             </div>
                         </div>
                     </div>

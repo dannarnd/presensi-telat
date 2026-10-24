@@ -74,21 +74,76 @@ class KepalaSekolahController extends Controller
             $momTrend = 'up';
         }
 
-        // 3. BK Resolution Rate - only students with >= 3 delays need BK attention
-        // Find student IDs with 3+ delay logs in this period
-        $studentsNeedingBK = DB::table('delay_logs')
-            ->whereBetween('created_at', [$startDate, $endDate])
+        // 3. Wall of Shame / Monitoring Seluruh Siswa Terlambat pada Periode Ini
+        $wallOfShame = DB::table('delay_logs')
+            ->join('students', 'delay_logs.student_id', '=', 'students.id')
+            ->join('school_classes', 'students.school_class_id', '=', 'school_classes.id')
+            ->select('students.id', 'students.name', 'students.nisn', 'school_classes.name as class_name', DB::raw('COUNT(delay_logs.id) as total_late'))
+            ->whereBetween('delay_logs.created_at', [$startDate, $endDate])
+            ->groupBy('students.id', 'students.name', 'students.nisn', 'school_classes.name')
+            ->orderByDesc('total_late')
+            ->get();
+
+        // Attach counseling status to all delayed students
+        $studentIds = $wallOfShame->pluck('id');
+        $counselingSummaries = DB::table('counseling_logs')
+            ->whereIn('student_id', $studentIds)
+            ->select(
+                'student_id',
+                DB::raw('COUNT(id) as counseling_count'),
+                DB::raw('MAX(created_at) as last_counseling_at')
+            )
             ->groupBy('student_id')
-            ->havingRaw('COUNT(id) >= 3')
-            ->pluck('student_id');
+            ->get()
+            ->keyBy('student_id');
 
-        $totalNeedBK = $studentsNeedingBK->count();
+        $latestCounselings = DB::table('counseling_logs')
+            ->whereIn('student_id', $studentIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('student_id')
+            ->keyBy('student_id');
 
-        // Among those students, how many have counseling logs recorded by BK
-        $resolvedLogs = DB::table('counseling_logs')
-            ->whereIn('student_id', $studentsNeedingBK)
-            ->distinct('student_id')
-            ->count('student_id');
+        $totalNeedBK = 0;
+        $resolvedLogs = 0;
+
+        foreach ($wallOfShame as $student) {
+            $summary = $counselingSummaries->get($student->id);
+            $latest = $latestCounselings->get($student->id);
+            $student->counseling_count = $summary ? (int) $summary->counseling_count : 0;
+            $student->last_counseling_at = $summary ? $summary->last_counseling_at : null;
+            $student->last_counselor_name = $latest ? $latest->counselor_name : null;
+            $student->last_counseling_notes = $latest ? $latest->notes : null;
+            $student->last_counseling_delay_count = $latest ? (int) ($latest->delay_count ?? 0) : 0;
+            $student->last_counseling_stage = $latest ? $latest->stage : null;
+
+            // Hitung siswa yang berada di ambang batas bimbingan BK (telat >= 3x)
+            if ($student->total_late >= 3) {
+                $totalNeedBK++;
+
+                $late = $student->total_late;
+                $count = $student->counseling_count;
+                $lastDelay = $student->last_counseling_delay_count;
+                $lastStage = $student->last_counseling_stage ?? '';
+
+                $isTahap3Done = ($count > 0 && ($lastDelay >= $late || str_contains($lastStage, 'Tahap 3') || str_contains($lastStage, 'SP') || str_contains($lastStage, 'Konferensi') || $count >= 3));
+                $isTahap2Done = ($count > 0 && ($lastDelay >= $late || str_contains($lastStage, 'Tahap 2') || str_contains($lastStage, 'Panggilan') || $isTahap3Done || $count >= 2));
+                $isTahap1Done = ($count > 0 && ($lastDelay >= $late || $isTahap2Done || $count >= 1));
+
+                $isResolved = false;
+                if ($late >= 6) {
+                    $isResolved = $isTahap3Done && !($lastDelay > 0 && $late > $lastDelay);
+                } elseif ($late >= 5) {
+                    $isResolved = $isTahap2Done && !($lastDelay > 0 && $late > $lastDelay);
+                } elseif ($late >= 3) {
+                    $isResolved = $isTahap1Done;
+                }
+
+                if ($isResolved) {
+                    $resolvedLogs++;
+                }
+            }
+        }
 
         $activeLogs = max(0, $totalNeedBK - $resolvedLogs);
         $resolutionRate = $totalNeedBK > 0 ? round(($resolvedLogs / $totalNeedBK) * 100) : 0;
@@ -118,48 +173,6 @@ class KepalaSekolahController extends Controller
         foreach ($trendDataRaw as $row) {
             $chartLabels[] = Carbon::parse($row->date)->format('d M');
             $chartData[] = $row->count;
-        }
-
-        // 6. Wall of Shame
-        $wallOfShame = DB::table('delay_logs')
-            ->join('students', 'delay_logs.student_id', '=', 'students.id')
-            ->join('school_classes', 'students.school_class_id', '=', 'school_classes.id')
-            ->select('students.id', 'students.name', 'students.nisn', 'school_classes.name as class_name', DB::raw('COUNT(delay_logs.id) as total_late'))
-            ->whereBetween('delay_logs.created_at', [$startDate, $endDate])
-            ->groupBy('students.id', 'students.name', 'students.nisn', 'school_classes.name')
-            ->orderByDesc('total_late')
-            ->limit(10)
-            ->get();
-
-        // Attach counseling status to Wall of Shame students
-        $studentIds = $wallOfShame->pluck('id');
-        $counselingSummaries = DB::table('counseling_logs')
-            ->whereIn('student_id', $studentIds)
-            ->select(
-                'student_id',
-                DB::raw('COUNT(id) as counseling_count'),
-                DB::raw('MAX(created_at) as last_counseling_at')
-            )
-            ->groupBy('student_id')
-            ->get()
-            ->keyBy('student_id');
-
-        $latestCounselings = DB::table('counseling_logs')
-            ->whereIn('student_id', $studentIds)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->unique('student_id')
-            ->keyBy('student_id');
-
-        foreach ($wallOfShame as $student) {
-            $summary = $counselingSummaries->get($student->id);
-            $latest = $latestCounselings->get($student->id);
-            $student->counseling_count = $summary ? (int) $summary->counseling_count : 0;
-            $student->last_counseling_at = $summary ? $summary->last_counseling_at : null;
-            $student->last_counselor_name = $latest ? $latest->counselor_name : null;
-            $student->last_counseling_notes = $latest ? $latest->notes : null;
-            $student->last_counseling_delay_count = $latest ? (int) ($latest->delay_count ?? 0) : 0;
-            $student->last_counseling_stage = $latest ? $latest->stage : null;
         }
 
         // 7. Most Problematic Class
@@ -230,21 +243,71 @@ class KepalaSekolahController extends Controller
         }
 
         $query = DelayLog::whereBetween('created_at', [$startDate, $endDate]);
-
-        $totalLate = $query->count();
-        $activeLogs = (clone $query)->where('status', 'active')->count();
-        $resolvedLogs = (clone $query)->where('status', 'resolved')->count();
-        $resolutionRate = $totalLate > 0 ? round(($resolvedLogs / $totalLate) * 100) : 0;
+        $totalLate = (clone $query)->distinct()->count('student_id');
 
         $wallOfShame = DB::table('delay_logs')
             ->join('students', 'delay_logs.student_id', '=', 'students.id')
             ->join('school_classes', 'students.school_class_id', '=', 'school_classes.id')
-            ->select('students.name', 'students.nisn', 'school_classes.name as class_name', DB::raw('COUNT(delay_logs.id) as total_late'))
+            ->select('students.id', 'students.name', 'students.nisn', 'school_classes.name as class_name', DB::raw('COUNT(delay_logs.id) as total_late'))
             ->whereBetween('delay_logs.created_at', [$startDate, $endDate])
             ->groupBy('students.id', 'students.name', 'students.nisn', 'school_classes.name')
             ->orderByDesc('total_late')
-            ->limit(20)
             ->get();
+
+        $studentIds = $wallOfShame->pluck('id');
+        $counselingSummaries = DB::table('counseling_logs')
+            ->whereIn('student_id', $studentIds)
+            ->select('student_id', DB::raw('COUNT(id) as counseling_count'))
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
+        $latestCounselings = DB::table('counseling_logs')
+            ->whereIn('student_id', $studentIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('student_id')
+            ->keyBy('student_id');
+
+        $totalNeedBK = 0;
+        $resolvedLogs = 0;
+
+        foreach ($wallOfShame as $student) {
+            $summary = $counselingSummaries->get($student->id);
+            $latest = $latestCounselings->get($student->id);
+            $student->counseling_count = $summary ? (int) $summary->counseling_count : 0;
+            $student->last_counselor_name = $latest ? $latest->counselor_name : null;
+            $student->last_counseling_delay_count = $latest ? (int) ($latest->delay_count ?? 0) : 0;
+            $student->last_counseling_stage = $latest ? $latest->stage : null;
+
+            if ($student->total_late >= 3) {
+                $totalNeedBK++;
+                $late = $student->total_late;
+                $count = $student->counseling_count;
+                $lastDelay = $student->last_counseling_delay_count;
+                $lastStage = $student->last_counseling_stage ?? '';
+
+                $isTahap3Done = ($count > 0 && ($lastDelay >= $late || str_contains($lastStage, 'Tahap 3') || str_contains($lastStage, 'SP') || str_contains($lastStage, 'Konferensi') || $count >= 3));
+                $isTahap2Done = ($count > 0 && ($lastDelay >= $late || str_contains($lastStage, 'Tahap 2') || str_contains($lastStage, 'Panggilan') || $isTahap3Done || $count >= 2));
+                $isTahap1Done = ($count > 0 && ($lastDelay >= $late || $isTahap2Done || $count >= 1));
+
+                $isResolved = false;
+                if ($late >= 6) {
+                    $isResolved = $isTahap3Done && !($lastDelay > 0 && $late > $lastDelay);
+                } elseif ($late >= 5) {
+                    $isResolved = $isTahap2Done && !($lastDelay > 0 && $late > $lastDelay);
+                } elseif ($late >= 3) {
+                    $isResolved = $isTahap1Done;
+                }
+
+                if ($isResolved) {
+                    $resolvedLogs++;
+                }
+            }
+        }
+
+        $activeLogs = max(0, $totalNeedBK - $resolvedLogs);
+        $resolutionRate = $totalNeedBK > 0 ? round(($resolvedLogs / $totalNeedBK) * 100) : 0;
 
         return view('pdf.dashboard', [
             'totalLate' => $totalLate,

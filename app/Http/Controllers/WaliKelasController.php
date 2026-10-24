@@ -29,10 +29,16 @@ class WaliKelasController extends Controller
             $classIds = collect([$selectedClassId]);
         }
         
-        $students = Student::with(['schoolClass', 'delayLogs' => function($q) {
-                $q->orderBy('delay_time', 'desc');
-            }])
-            ->withCount('delayLogs')
+        $students = Student::with([
+                'schoolClass', 
+                'delayLogs' => function($q) {
+                    $q->orderBy('delay_time', 'desc');
+                },
+                'counselingLogs' => function($q) {
+                    $q->with('user')->orderBy('created_at', 'desc');
+                }
+            ])
+            ->withCount(['delayLogs', 'counselingLogs'])
             ->whereIn('school_class_id', $classIds)
             ->whereHas('delayLogs') // Hanya tampilkan yang pernah telat
             ->orderBy('name')

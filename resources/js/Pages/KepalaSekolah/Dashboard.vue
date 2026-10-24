@@ -102,14 +102,22 @@ const isStudentNeedsBK = (student) => {
     return false;
 };
 
-const topTab = ref('active'); // 'active' | 'resolved' | 'all'
+const topTab = ref('active'); // 'active' | 'resolved' | 'top10' | 'all'
 
 const activeTopStudents = computed(() => {
     return (props.wallOfShame || []).filter(s => isStudentNeedsBK(s));
 });
 
 const resolvedTopStudents = computed(() => {
-    return (props.wallOfShame || []).filter(s => !isStudentNeedsBK(s) && (s.counseling_count || 0) > 0);
+    return (props.wallOfShame || []).filter(s => !isStudentNeedsBK(s) && (s.total_late || 0) >= 3);
+});
+
+const top10Students = computed(() => {
+    return (props.wallOfShame || []).slice(0, 10);
+});
+
+const allLateStudents = computed(() => {
+    return props.wallOfShame || [];
 });
 
 const filteredWallOfShame = computed(() => {
@@ -117,8 +125,10 @@ const filteredWallOfShame = computed(() => {
         return activeTopStudents.value;
     } else if (topTab.value === 'resolved') {
         return resolvedTopStudents.value;
+    } else if (topTab.value === 'top10') {
+        return top10Students.value;
     }
-    return props.wallOfShame || [];
+    return allLateStudents.value;
 });
 
 // Bar Chart
@@ -282,20 +292,28 @@ const getCounselingBadge = (student, delayNumber) => {
                     </div>
                 </div>
 
-                <!-- Wall of Shame -->
+                <!-- Monitoring Penanganan Siswa Terlambat -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="bg-red-50 p-6 border-b border-red-100 flex items-center justify-between">
+                    <div class="bg-indigo-50/70 p-6 border-b border-indigo-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h3 class="text-xl font-black text-red-800">10 Besar Siswa Sering Terlambat</h3>
-                            <p class="text-sm text-red-600 font-medium">Prioritas untuk tindak lanjut Bimbingan Konseling.</p>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xl font-black text-indigo-950">Monitoring Penanganan Keterlambatan Siswa</h3>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-200 text-indigo-900">
+                                    {{ (wallOfShame || []).length }} Siswa
+                                </span>
+                            </div>
+                            <p class="text-sm text-indigo-700 font-medium mt-0.5">Pemantauan tindak lanjut Bimbingan Konseling (BK) untuk seluruh siswa yang terlambat pada periode ini.</p>
                         </div>
-                        <div class="hidden sm:block">
-                            <svg class="w-12 h-12 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-indigo-800 border border-indigo-200 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                {{ resolvedTopStudents.length }} Selesai Ditangani ({{ resolutionRate }}%)
+                            </span>
                         </div>
                     </div>
 
                     <!-- Navigation Tabs -->
-                    <div class="flex items-center space-x-2 border-b border-gray-100 px-6 pt-3 bg-slate-50/50">
+                    <div class="flex flex-wrap items-center gap-2 border-b border-gray-100 px-6 pt-3 bg-slate-50/50">
                         <button @click="topTab = 'active'"
                             :class="['pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
                                 topTab === 'active' 
@@ -324,6 +342,20 @@ const getCounselingBadge = (student, delayNumber) => {
                             </span>
                         </button>
 
+                        <button @click="topTab = 'top10'"
+                            :class="['pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
+                                topTab === 'top10' 
+                                    ? 'border-amber-600 text-amber-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>10 Teratas Terbanyak</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800">
+                                {{ top10Students.length }}
+                            </span>
+                        </button>
+
                         <button @click="topTab = 'all'"
                             :class="['pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
                                 topTab === 'all' 
@@ -332,7 +364,7 @@ const getCounselingBadge = (student, delayNumber) => {
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                             </svg>
-                            <span>Semua 10 Besar</span>
+                            <span>Semua Siswa Terlambat</span>
                             <span class="px-2 py-0.5 rounded-full text-xs font-black bg-slate-200 text-slate-700">
                                 {{ (wallOfShame || []).length }}
                             </span>
@@ -354,7 +386,10 @@ const getCounselingBadge = (student, delayNumber) => {
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 <tr v-for="(student, index) in filteredWallOfShame" :key="student.id || index" class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div :class="['w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm', index < 3 && topTab === 'all' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600']">
+                                        <div :class="['w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm',
+                                            topTab === 'active' ? 'bg-rose-100 text-rose-700' :
+                                            topTab === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                            index < 3 ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600']">
                                             #{{ index + 1 }}
                                         </div>
                                     </td>

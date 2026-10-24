@@ -6,56 +6,7 @@ const props = defineProps({
     students: Array,
 });
 
-const activeTab = ref('bk_needed'); // 'bk_needed' | 'light_warning' | 'all'
-const searchQuery = ref('');
-
-const bkNeededCount = computed(() => (props.students || []).filter(s => (s.delay_logs_count || 0) >= 3).length);
-const lightWarningCount = computed(() => (props.students || []).filter(s => (s.delay_logs_count || 0) < 3).length);
-
-const filteredStudents = computed(() => {
-    let list = props.students || [];
-
-    if (activeTab.value === 'bk_needed') {
-        list = list.filter(s => (s.delay_logs_count || 0) >= 3);
-    } else if (activeTab.value === 'light_warning') {
-        list = list.filter(s => (s.delay_logs_count || 0) < 3);
-    }
-
-    if (!searchQuery.value) return list;
-    const q = searchQuery.value.toLowerCase();
-    return list.filter(student =>
-        student.name.toLowerCase().includes(q) ||
-        student.nisn.toLowerCase().includes(q) ||
-        (student.school_class && student.school_class.name.toLowerCase().includes(q))
-    );
-});
-
-// Helper untuk mencocokkan event keterlambatan ke-N dengan rekam bimbingan BK
-const getCounselingBadge = (student, delayNumber) => {
-    if (!student || !student.counseling_logs) return null;
-    return student.counseling_logs.find(c => c.delay_count === delayNumber);
-};
-
-const generateWaLink = (student) => {
-    if (!student.no_wa_ortu) return '#';
-
-    let phone = student.no_wa_ortu;
-    if (phone.startsWith('0')) {
-        phone = '62' + phone.substring(1);
-    }
-
-    const lateCount = student.delay_logs_count ?? student.active_delay_logs_count ?? 0;
-    let message = '';
-    
-    if (lateCount >= 5) {
-        message = `Selamat pagi/siang Bapak/Ibu Wali Murid dari ananda ${student.name} (Kelas ${student.school_class?.name || '-'}).\n\nKami dari pihak Bimbingan Konseling (BK) memberitahukan bahwa ananda telah tercatat datang terlambat sebanyak ${lateCount} kali. Mengingat jumlah keterlambatan sudah melampaui batas toleransi (Tahap Panggilan Orang Tua), kami mengundang Bapak/Ibu untuk hadir ke ruang BK sekolah guna mendiskusikan kedisiplinan dan pembinaan ananda.\n\nAtas perhatian dan kerja samanya, kami ucapkan terima kasih.`;
-    } else {
-        message = `Selamat pagi/siang Bapak/Ibu Wali Murid dari ananda ${student.name} (Kelas ${student.school_class?.name || '-'}).\n\nKami dari pihak Bimbingan Konseling (BK) menginformasikan bahwa ananda telah tercatat datang terlambat sebanyak ${lateCount} kali. Mohon pendampingan Bapak/Ibu di rumah agar ananda dapat hadir tepat waktu di sekolah.\n\nTerima kasih.`;
-    }
-
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-};
-
+// Helper status penyelesaian bimbingan BK
 const isTahap3Done = (student) => {
     const late = student?.delay_logs_count ?? student?.total_late ?? 0;
     const logs = student?.counseling_logs || [];
@@ -97,6 +48,103 @@ const isTahap1Done = (student) => {
     if (lastDelay >= late) return true;
     if (count >= 1) return true;
     return false;
+};
+
+// Cek apakah siswa saat ini membutuhkan tindakan BK
+const isStudentNeedsAction = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    if (late < 3) return false;
+
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0) return true;
+
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+
+    // Jika bimbingan terakhir sudah mencakup titik keterlambatan saat ini
+    if (lastDelay >= late) return false;
+
+    if (late >= 6) {
+        if (!isTahap3Done(student)) return true;
+        if (lastDelay > 0 && late > lastDelay) return true; // Telat pasca-SP
+        return false;
+    }
+    if (late >= 5) {
+        if (!isTahap2Done(student)) return true;
+        if (lastDelay > 0 && late > lastDelay) return true; // Telat pasca-panggilan
+        return false;
+    }
+    if (late >= 3) {
+        return !isTahap1Done(student);
+    }
+    return false;
+};
+
+const activeTab = ref('needs_action'); // 'needs_action' | 'resolved' | 'light_warning' | 'all'
+const searchQuery = ref('');
+
+const needsActionStudents = computed(() => {
+    return (props.students || []).filter(s => isStudentNeedsAction(s));
+});
+
+const resolvedStudents = computed(() => {
+    return (props.students || []).filter(s => !isStudentNeedsAction(s) && (s.delay_logs_count || 0) >= 3);
+});
+
+const lightWarningStudents = computed(() => {
+    return (props.students || []).filter(s => (s.delay_logs_count || 0) < 3);
+});
+
+const allLateStudents = computed(() => {
+    return props.students || [];
+});
+
+const filteredStudents = computed(() => {
+    let list = [];
+
+    if (activeTab.value === 'needs_action') {
+        list = needsActionStudents.value;
+    } else if (activeTab.value === 'resolved') {
+        list = resolvedStudents.value;
+    } else if (activeTab.value === 'light_warning') {
+        list = lightWarningStudents.value;
+    } else {
+        list = allLateStudents.value;
+    }
+
+    if (!searchQuery.value) return list;
+    const q = searchQuery.value.toLowerCase();
+    return list.filter(student =>
+        student.name.toLowerCase().includes(q) ||
+        student.nisn.toLowerCase().includes(q) ||
+        (student.school_class && student.school_class.name.toLowerCase().includes(q))
+    );
+});
+
+// Helper untuk mencocokkan event keterlambatan ke-N dengan rekam bimbingan BK
+const getCounselingBadge = (student, delayNumber) => {
+    if (!student || !student.counseling_logs) return null;
+    return student.counseling_logs.find(c => c.delay_count === delayNumber);
+};
+
+const generateWaLink = (student) => {
+    if (!student.no_wa_ortu) return '#';
+
+    let phone = student.no_wa_ortu;
+    if (phone.startsWith('0')) {
+        phone = '62' + phone.substring(1);
+    }
+
+    const lateCount = student.delay_logs_count ?? student.active_delay_logs_count ?? 0;
+    let message = '';
+    
+    if (lateCount >= 5) {
+        message = `Selamat pagi/siang Bapak/Ibu Wali Murid dari ananda ${student.name} (Kelas ${student.school_class?.name || '-'}).\n\nKami dari pihak Bimbingan Konseling (BK) memberitahukan bahwa ananda telah tercatat datang terlambat sebanyak ${lateCount} kali. Mengingat jumlah keterlambatan sudah melampaui batas toleransi (Tahap Panggilan Orang Tua), kami mengundang Bapak/Ibu untuk hadir ke ruang BK sekolah guna mendiskusikan kedisiplinan dan pembinaan ananda.\n\nAtas perhatian dan kerja samanya, kami ucapkan terima kasih.`;
+    } else {
+        message = `Selamat pagi/siang Bapak/Ibu Wali Murid dari ananda ${student.name} (Kelas ${student.school_class?.name || '-'}).\n\nKami dari pihak Bimbingan Konseling (BK) menginformasikan bahwa ananda telah tercatat datang terlambat sebanyak ${lateCount} kali. Mohon pendampingan Bapak/Ibu di rumah agar ananda dapat hadir tepat waktu di sekolah.\n\nTerima kasih.`;
+    }
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
 
 const getWarningBadge = (student) => {
@@ -242,16 +290,29 @@ const submitCounseling = () => {
 
                 <!-- Tab Navigasi Kategori BK -->
                 <div class="px-6 pt-3 border-b border-slate-200 flex flex-wrap items-center gap-2 bg-slate-50/70">
-                    <button @click="activeTab = 'bk_needed'"
+                    <button @click="activeTab = 'needs_action'"
                         :class="['px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2',
-                            activeTab === 'bk_needed' 
+                            activeTab === 'needs_action' 
                                 ? 'bg-white text-rose-700 border-rose-600 shadow-sm' 
                                 : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/70']">
                         <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                        Wajib Ditindak BK (Telat &ge; 3x)
+                        Perlu Tindakan BK (Belum Tuntas)
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
-                            :class="activeTab === 'bk_needed' ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-600'">
-                            {{ bkNeededCount }}
+                            :class="activeTab === 'needs_action' ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-600'">
+                            {{ needsActionStudents.length }}
+                        </span>
+                    </button>
+
+                    <button @click="activeTab = 'resolved'"
+                        :class="['px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2',
+                            activeTab === 'resolved' 
+                                ? 'bg-white text-emerald-700 border-emerald-600 shadow-sm' 
+                                : 'text-slate-500 border-transparent hover:text-slate-700 hover:bg-slate-100/70']">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Sudah Ditindaklanjuti BK (Tuntas)
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                            :class="activeTab === 'resolved' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                            {{ resolvedStudents.length }}
                         </span>
                     </button>
 
@@ -264,7 +325,7 @@ const submitCounseling = () => {
                         Pantauan Ringan (Telat 1–2x)
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
                             :class="activeTab === 'light_warning' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'">
-                            {{ lightWarningCount }}
+                            {{ lightWarningStudents.length }}
                         </span>
                     </button>
 
@@ -276,7 +337,7 @@ const submitCounseling = () => {
                         Semua Siswa Terlambat
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
                             :class="activeTab === 'all' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'">
-                            {{ props.students?.length || 0 }}
+                            {{ allLateStudents.length }}
                         </span>
                     </button>
                 </div>
@@ -368,17 +429,25 @@ const submitCounseling = () => {
                             </tr>
                             <tr v-if="filteredStudents.length === 0">
                                 <td colspan="4" class="px-6 py-12 text-center">
-                                    <div
-                                        class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
-                                        <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
+                                    <div v-if="activeTab === 'needs_action' && !searchQuery" class="space-y-2">
+                                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-2">
+                                            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <h4 class="text-base font-bold text-slate-800">Semua Bimbingan Tuntas!</h4>
+                                        <p class="text-xs text-slate-500 max-w-sm mx-auto">Tidak ada siswa yang sedang menunggu tindak lanjut BK saat ini. Luar biasa!</p>
                                     </div>
-                                    <p class="text-slate-500 font-medium">
-                                        {{ searchQuery ? 'Pencarian tidak ditemukan.' : 'Tidak ada data siswa pada kategori ini.' }}
-                                    </p>
+                                    <div v-else>
+                                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                                            <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-slate-500 font-medium">
+                                            {{ searchQuery ? 'Pencarian tidak ditemukan.' : 'Tidak ada data siswa pada kategori ini.' }}
+                                        </p>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
