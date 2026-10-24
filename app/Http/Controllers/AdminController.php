@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CounselingLog;
 use App\Models\DelayLog;
 use App\Models\LoginLog;
 use App\Models\SchoolClass;
@@ -21,6 +22,8 @@ class AdminController extends Controller
         $todayCancelledLogs = DelayLog::onlyTrashed()->whereDate('deleted_at', today())->count();
         $todayLoginLogs = LoginLog::whereDate('created_at', today())->count();
         $failedLoginAttemptsToday = LoginLog::whereDate('created_at', today())->where('status', 'failed')->count();
+        $totalCounselingLogs = CounselingLog::count();
+        $todayCounselingLogs = CounselingLog::whereDate('created_at', today())->count();
 
         // Get today's delay logs with count
         $todayLogs = DelayLog::with(['student' => function ($query) {
@@ -38,6 +41,8 @@ class AdminController extends Controller
             'todayCancelledLogs' => $todayCancelledLogs,
             'todayLoginLogs' => $todayLoginLogs,
             'failedLoginAttemptsToday' => $failedLoginAttemptsToday,
+            'totalCounselingLogs' => $totalCounselingLogs,
+            'todayCounselingLogs' => $todayCounselingLogs,
             'todayLogs' => $todayLogs,
         ]);
     }
@@ -484,5 +489,107 @@ class AdminController extends Controller
 
         LoginLog::query()->delete();
         return redirect()->back()->with('success', 'Semua riwayat log aktivitas login berhasil dibersihkan.');
+    }
+
+    public function counselingLogs(Request $request)
+    {
+        $query = CounselingLog::with(['student.schoolClass', 'user'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($sq) use ($search) {
+                    $sq->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                       ->orWhereRaw('LOWER(nisn) LIKE ?', ["%{$search}%"]);
+                })
+                ->orWhereHas('student.schoolClass', function ($cq) use ($search) {
+                    $cq->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+                })
+                ->orWhereRaw('LOWER(counselor_name) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(notes) LIKE ?', ["%{$search}%"])
+                ->orWhereRaw('LOWER(stage) LIKE ?', ["%{$search}%"])
+                ->orWhereHas('user', function ($uq) use ($search) {
+                    $uq->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+                });
+            });
+        }
+
+        if ($request->filled('stage') && $request->stage !== 'all') {
+            $stage = $request->stage;
+            if ($stage === 'tahap_1') {
+                $query->where('stage', 'like', '%Tahap 1%');
+            } elseif ($stage === 'tahap_2') {
+                $query->where('stage', 'like', '%Tahap 2%');
+            } elseif ($stage === 'tahap_3') {
+                $query->where('stage', 'like', '%Tahap 3%');
+            }
+        }
+
+        if ($request->filled('counselor') && $request->counselor !== 'all') {
+            $query->where('counselor_name', $request->counselor);
+        }
+
+        if ($request->filled('class_id') && $request->class_id !== 'all') {
+            $classId = $request->class_id;
+            $query->whereHas('student', function ($sq) use ($classId) {
+                $sq->where('school_class_id', $classId);
+            });
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $logs = $query->paginate(20)->withQueryString();
+
+        $classes = SchoolClass::orderBy('name')->get();
+        $counselors = CounselingLog::select('counselor_name')
+            ->whereNotNull('counselor_name')
+            ->distinct()
+            ->pluck('counselor_name');
+
+        return Inertia::render('Admin/CounselingLogs', [
+            'counselingLogs' => $logs,
+            'filters' => [
+                'search' => $request->search ?? '',
+                'stage' => $request->stage ?? 'all',
+                'counselor' => $request->counselor ?? 'all',
+                'class_id' => $request->class_id ?? 'all',
+                'date' => $request->date ?? '',
+            ],
+            'classes' => $classes,
+            'counselors' => $counselors,
+            'stats' => [
+                'total' => CounselingLog::count(),
+                'today' => CounselingLog::whereDate('created_at', today())->count(),
+                'this_month' => CounselingLog::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+                'tahap1' => CounselingLog::where('stage', 'like', '%Tahap 1%')->count(),
+                'tahap2' => CounselingLog::where('stage', 'like', '%Tahap 2%')->count(),
+                'tahap3' => CounselingLog::where('stage', 'like', '%Tahap 3%')->count(),
+            ],
+        ]);
+    }
+
+    public function destroyCounselingLog($id)
+    {
+        $log = CounselingLog::with('student')->findOrFail($id);
+        $studentName = $log->student?->name ?? 'Siswa';
+        $log->delete();
+
+        return redirect()->back()->with('success', "Catatan bimbingan BK untuk {$studentName} berhasil dihapus.");
+    }
+
+    public function clearCounselingLogs(Request $request)
+    {
+        $scope = $request->input('scope', 'all');
+
+        if ($scope === 'older_30_days') {
+            $deletedCount = CounselingLog::where('created_at', '<', now()->subDays(30))->delete();
+            return redirect()->back()->with('success', "Sebanyak {$deletedCount} catatan bimbingan BK yang lebih lama dari 30 hari berhasil dibersihkan.");
+        }
+
+        CounselingLog::query()->delete();
+        return redirect()->back()->with('success', 'Semua riwayat catatan bimbingan BK berhasil dibersihkan.');
     }
 }

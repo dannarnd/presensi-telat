@@ -66,6 +66,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/students/bulk-action', [AdminController::class, 'bulkActionStudents'])->name('students.bulk-action');
     Route::post('/students/import', [AdminController::class, 'importStudents'])->name('students.import');
 
+    Route::get('/counseling-logs', [AdminController::class, 'counselingLogs'])->name('counseling_logs.index');
+    Route::delete('/counseling-logs/{id}', [AdminController::class, 'destroyCounselingLog'])->name('counseling_logs.destroy');
+    Route::post('/counseling-logs/clear', [AdminController::class, 'clearCounselingLogs'])->name('counseling_logs.clear');
+
     Route::get('/cancellation-logs', [AdminController::class, 'cancellationLogs'])->name('cancellation_logs.index');
     Route::post('/cancellation-logs/{id}/restore', [AdminController::class, 'restoreCancellationLog'])->name('cancellation_logs.restore');
     Route::delete('/cancellation-logs/{id}/force', [AdminController::class, 'forceDeleteCancellationLog'])->name('cancellation_logs.force_delete');

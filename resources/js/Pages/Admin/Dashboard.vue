@@ -11,6 +11,8 @@ const props = defineProps({
     todayCancelledLogs: Number,
     todayLoginLogs: Number,
     failedLoginAttemptsToday: Number,
+    totalCounselingLogs: Number,
+    todayCounselingLogs: Number,
     todayLogs: Array,
 });
 
@@ -46,60 +48,74 @@ const getWarningBadge = (count) => {
         <div class="py-12 max-w-7xl mx-auto sm:px-6 lg:px-8">
 
             <!-- Stat Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-                <div class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4">
-                    <div class="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div class="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-3">
+                    <div class="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </div>
                     <div>
-                        <div class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Pengguna</div>
-                        <div class="text-3xl font-black text-slate-800">{{ totalUsers }}</div>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total User</div>
+                        <div class="text-2xl font-black text-slate-800">{{ totalUsers }}</div>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4">
-                    <div class="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                <div class="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-3">
+                    <div class="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                     </div>
                     <div>
-                        <div class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Kelas</div>
-                        <div class="text-3xl font-black text-slate-800">{{ totalClasses }}</div>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Kelas</div>
+                        <div class="text-2xl font-black text-slate-800">{{ totalClasses }}</div>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4">
-                    <div class="h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                <div class="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-3">
+                    <div class="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     </div>
                     <div>
-                        <div class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Siswa</div>
-                        <div class="text-3xl font-black text-slate-800">{{ totalStudents }}</div>
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Siswa</div>
+                        <div class="text-2xl font-black text-slate-800">{{ totalStudents }}</div>
                     </div>
                 </div>
-                <Link :href="(typeof route === 'function' && route().has('admin.cancellation_logs.index')) ? route('admin.cancellation_logs.index') : '/admin/cancellation-logs'" class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4 hover:border-rose-300 hover:shadow-rose-100 transition-all group">
-                    <div class="h-14 w-14 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-105 transition-transform">
-                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <Link :href="(typeof route === 'function' && route().has('admin.counseling_logs.index')) ? route('admin.counseling_logs.index') : '/admin/counseling-logs'" class="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-3 hover:border-indigo-300 hover:shadow-indigo-100 transition-all group">
+                    <div class="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-105 transition-transform shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>Tindak BK</span>
+                            <span v-if="todayCounselingLogs > 0" class="px-1.5 py-0.5 text-[9px] bg-indigo-600 text-white font-black rounded-full">{{ todayCounselingLogs }} baru</span>
+                        </div>
+                        <div class="text-2xl font-black text-slate-800">{{ totalCounselingLogs ?? 0 }}</div>
+                    </div>
+                </Link>
+                <Link :href="(typeof route === 'function' && route().has('admin.cancellation_logs.index')) ? route('admin.cancellation_logs.index') : '/admin/cancellation-logs'" class="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-3 hover:border-rose-300 hover:shadow-rose-100 transition-all group">
+                    <div class="h-12 w-12 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-105 transition-transform shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
                     <div class="overflow-hidden">
-                        <div class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                             <span>Log Batal</span>
-                            <span v-if="todayCancelledLogs > 0" class="px-1.5 py-0.5 text-[10px] bg-rose-500 text-white font-black rounded-full">{{ todayCancelledLogs }} baru</span>
+                            <span v-if="todayCancelledLogs > 0" class="px-1.5 py-0.5 text-[9px] bg-rose-500 text-white font-black rounded-full">{{ todayCancelledLogs }} baru</span>
                         </div>
-                        <div class="text-3xl font-black text-slate-800">{{ totalCancelledLogs ?? 0 }}</div>
+                        <div class="text-2xl font-black text-slate-800">{{ totalCancelledLogs ?? 0 }}</div>
                     </div>
                 </Link>
-                <Link :href="(typeof route === 'function' && route().has('admin.login_logs.index')) ? route('admin.login_logs.index') : '/admin/login-logs'" class="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-4 hover:border-blue-300 hover:shadow-blue-100 transition-all group">
-                    <div class="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform shrink-0">
-                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <Link :href="(typeof route === 'function' && route().has('admin.login_logs.index')) ? route('admin.login_logs.index') : '/admin/login-logs'" class="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 flex items-center space-x-3 hover:border-blue-300 hover:shadow-blue-100 transition-all group">
+                    <div class="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform shrink-0">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                         </svg>
                     </div>
                     <div class="overflow-hidden">
-                        <div class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                             <span>Log Akses</span>
-                            <span v-if="failedLoginAttemptsToday > 0" class="px-1.5 py-0.5 text-[10px] bg-rose-500 text-white font-black rounded-full">{{ failedLoginAttemptsToday }} gagal</span>
+                            <span v-if="failedLoginAttemptsToday > 0" class="px-1.5 py-0.5 text-[9px] bg-rose-500 text-white font-black rounded-full">{{ failedLoginAttemptsToday }} gagal</span>
                         </div>
-                        <div class="text-3xl font-black text-slate-800">{{ todayLoginLogs ?? 0 }} <span class="text-xs font-normal text-slate-400">hari ini</span></div>
+                        <div class="text-2xl font-black text-slate-800">{{ todayLoginLogs ?? 0 }}</div>
                     </div>
                 </Link>
             </div>
