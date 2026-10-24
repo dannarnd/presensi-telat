@@ -124,7 +124,7 @@ const filteredStudents = computed(() => {
 // Helper untuk mencocokkan event keterlambatan ke-N dengan rekam bimbingan BK
 const getCounselingBadge = (student, delayNumber) => {
     if (!student || !student.counseling_logs) return null;
-    return student.counseling_logs.find(c => c.delay_count === delayNumber);
+    return student.counseling_logs.find(c => Number(c.delay_count) === Number(delayNumber));
 };
 
 const generateWaLink = (student) => {
@@ -174,6 +174,10 @@ const getWarningBadge = (student) => {
         return { class: 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse', text: 'Wajib Panggilan Ortu (Tahap 2)' };
     } else if (lateCount >= 3) {
         if (isTahap1Done(student)) {
+            if (lastDelay > 0 && lateCount > lastDelay) {
+                const diff = lateCount - lastDelay;
+                return { class: 'bg-amber-100 text-amber-800 border-amber-300 font-bold', text: `Siaga Panggilan Ortu (+${diff}x)` };
+            }
             return { class: 'bg-blue-100 text-blue-800 border-blue-200', text: 'Bimbingan Siswa Selesai' };
         }
         return { class: 'bg-amber-100 text-amber-800 border-amber-300', text: 'Wajib Bimbingan Siswa (Tahap 1)' };

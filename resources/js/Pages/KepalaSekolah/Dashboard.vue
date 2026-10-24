@@ -195,7 +195,7 @@ const openDetail = async (student) => {
 
 const getCounselingBadge = (student, delayNumber) => {
     if (!student || !student.counseling_logs) return null;
-    return student.counseling_logs.find(c => c.delay_count === delayNumber);
+    return student.counseling_logs.find(c => Number(c.delay_count) === Number(delayNumber));
 };
 </script>
 

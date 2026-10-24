@@ -159,6 +159,14 @@ const getBKStatus = (student) => {
 
     if (late >= 3) {
         if (isTahap1Done(student)) {
+            if (lastDelay > 0 && late > lastDelay) {
+                return {
+                    status: 'warning',
+                    badgeClass: 'bg-amber-100 text-amber-800 border-amber-300 font-bold',
+                    text: `Siaga Panggilan Ortu (+${late - lastDelay}x)`,
+                    subtext: counselor ? `Bimbingan oleh: ${counselor} (Telat ke-${lastDelay})` : null
+                };
+            }
             return {
                 status: 'resolved',
                 badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 font-bold',
