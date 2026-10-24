@@ -1,0 +1,1 @@
+import{b as e,k as t}from"./app-kEqCIA7O.js";import{t as n}from"./_plugin-vue_export-helper-BDNMzG2s.js";var r={},i={src:`/images/logo.png`,alt:`Logo SMK Negeri 5 Telkom Banda Aceh`,class:`object-contain`};function a(n,r){return t(),e(`img`,i)}var o=n(r,[[`render`,a]]);export{o as t};

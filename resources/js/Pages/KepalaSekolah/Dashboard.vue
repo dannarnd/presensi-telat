@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Bar, Doughnut } from 'vue-chartjs';
@@ -38,6 +38,36 @@ const printUrl = ref('');
 const printPdf = () => {
     printUrl.value = route('kepala_sekolah.pdf', { period: selectedPeriod.value, t: Date.now() });
 };
+
+// Filter Tab 10 Besar (Perlu Tindakan BK vs Sudah Ditindaklanjuti)
+const isStudentNeedsBK = (student) => {
+    const late = student.total_late || 0;
+    const count = student.counseling_count || 0;
+    if (late < 3) return false;
+    if (late >= 6) return count < 3;
+    if (late >= 5) return count < 2;
+    if (late >= 3) return count < 1;
+    return false;
+};
+
+const topTab = ref('active'); // 'active' | 'resolved' | 'all'
+
+const activeTopStudents = computed(() => {
+    return (props.wallOfShame || []).filter(s => isStudentNeedsBK(s));
+});
+
+const resolvedTopStudents = computed(() => {
+    return (props.wallOfShame || []).filter(s => !isStudentNeedsBK(s) && (s.counseling_count || 0) > 0);
+});
+
+const filteredWallOfShame = computed(() => {
+    if (topTab.value === 'active') {
+        return activeTopStudents.value;
+    } else if (topTab.value === 'resolved') {
+        return resolvedTopStudents.value;
+    }
+    return props.wallOfShame || [];
+});
 
 // Bar Chart
 const barChartConfig = {
@@ -211,6 +241,51 @@ const getCounselingBadge = (student, delayNumber) => {
                             <svg class="w-12 h-12 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </div>
                     </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="flex items-center space-x-2 border-b border-gray-100 px-6 pt-3 bg-slate-50/50">
+                        <button @click="topTab = 'active'"
+                            :class="['pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
+                                topTab === 'active' 
+                                    ? 'border-rose-600 text-rose-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Perlu Tindakan BK</span>
+                            <span v-if="activeTopStudents.length > 0" class="px-2 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-700">
+                                {{ activeTopStudents.length }}
+                            </span>
+                        </button>
+
+                        <button @click="topTab = 'resolved'"
+                            :class="['pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
+                                topTab === 'resolved' 
+                                    ? 'border-emerald-600 text-emerald-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Sudah Ditindaklanjuti BK</span>
+                            <span v-if="resolvedTopStudents.length > 0" class="px-2 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">
+                                {{ resolvedTopStudents.length }}
+                            </span>
+                        </button>
+
+                        <button @click="topTab = 'all'"
+                            :class="['pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2',
+                                topTab === 'all' 
+                                    ? 'border-blue-600 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300']">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
+                            <span>Semua 10 Besar</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-black bg-slate-200 text-slate-700">
+                                {{ (wallOfShame || []).length }}
+                            </span>
+                        </button>
+                    </div>
                     
                     <div class="overflow-x-auto p-0">
                         <table class="min-w-full divide-y divide-gray-100">
@@ -225,9 +300,9 @@ const getCounselingBadge = (student, delayNumber) => {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
-                                <tr v-for="(student, index) in wallOfShame" :key="index" class="hover:bg-gray-50">
+                                <tr v-for="(student, index) in filteredWallOfShame" :key="student.id || index" class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div :class="['w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm', index < 3 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600']">
+                                        <div :class="['w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm', index < 3 && topTab === 'all' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600']">
                                             #{{ index + 1 }}
                                         </div>
                                     </td>
@@ -244,28 +319,103 @@ const getCounselingBadge = (student, delayNumber) => {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div v-if="student.counseling_count > 0">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                Ditindaklanjuti ({{ student.counseling_count }}x Bimbingan)
-                                            </span>
-                                            <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1">
-                                                Oleh: <strong>{{ student.last_counselor_name }}</strong>
+                                        <!-- Kasus Tahap 3 (Telat >= 6x) -->
+                                        <div v-if="student.total_late >= 6">
+                                            <div v-if="student.counseling_count >= 3">
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Konferensi Kasus / SP Selesai ({{ student.counseling_count }}x Bimbingan)
+                                                </span>
+                                                <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                                    <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
+                                                    <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
+                                                    <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                                </div>
+                                            </div>
+                                            <div v-else>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300 animate-pulse">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                    Wajib Konferensi Kasus / SP (Tahap 3)
+                                                </span>
+                                                <div v-if="student.counseling_count > 0 && student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0"></span>
+                                                    <span>Sebelumnya oleh: <strong>{{ student.last_counselor_name }}</strong></span>
+                                                    <span class="text-slate-400">({{ student.counseling_count }}x Bimbingan)</span>
+                                                </div>
+                                                <div v-else class="text-[11px] text-purple-600 font-semibold mt-0.5">
+                                                    Perlu Konferensi Kasus bersama Kepala Sekolah & SP
+                                                </div>
                                             </div>
                                         </div>
+
+                                        <!-- Kasus Tahap 2 (Telat 5x) -->
+                                        <div v-else-if="student.total_late >= 5">
+                                            <div v-if="student.counseling_count >= 2">
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Panggilan Ortu Selesai ({{ student.counseling_count }}x Bimbingan)
+                                                </span>
+                                                <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                                    <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
+                                                    <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
+                                                    <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                                </div>
+                                            </div>
+                                            <div v-else>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                    Wajib Panggilan Orang Tua (Tahap 2)
+                                                </span>
+                                                <div v-if="student.counseling_count > 0 && student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0"></span>
+                                                    <span>Sebelumnya oleh: <strong>{{ student.last_counselor_name }}</strong></span>
+                                                </div>
+                                                <div v-else class="text-[11px] text-rose-600 font-semibold mt-0.5">
+                                                    Orang tua wajib diundang ke sekolah
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Kasus Tahap 1 (Telat 3-4x) -->
                                         <div v-else-if="student.total_late >= 3">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
-                                                <svg class="w-3.5 h-3.5 mr-1 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                </svg>
-                                                Belum Ditindaklanjuti BK
-                                            </span>
-                                            <div class="text-[11px] text-rose-600 font-semibold mt-0.5">
-                                                {{ student.total_late >= 5 ? 'Perlu Panggilan Orang Tua' : 'Perlu Bimbingan Siswa' }}
+                                            <div v-if="student.counseling_count >= 1">
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Bimbingan Siswa Selesai
+                                                </span>
+                                                <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block shrink-0"></span>
+                                                    <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
+                                                    <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
+                                                    <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                                </div>
+                                            </div>
+                                            <div v-else>
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                    <svg class="w-3.5 h-3.5 mr-1 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                    Wajib Bimbingan Siswa (Tahap 1)
+                                                </span>
+                                                <div class="text-[11px] text-amber-700 font-semibold mt-0.5">
+                                                    Perlu pembinaan langsung oleh Guru BK
+                                                </div>
                                             </div>
                                         </div>
+
+                                        <!-- Kasus Ringan (1-2x) -->
                                         <div v-else>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
                                                 Pembinaan Ringan
@@ -278,9 +428,23 @@ const getCounselingBadge = (student, delayNumber) => {
                                         </button>
                                     </td>
                                 </tr>
-                                <tr v-if="wallOfShame.length === 0">
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                                        Belum ada data keterlambatan pada periode ini.
+                                <tr v-if="filteredWallOfShame.length === 0">
+                                    <td colspan="6" class="px-6 py-10 text-center">
+                                        <div v-if="topTab === 'active'" class="space-y-2">
+                                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600">
+                                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <h4 class="text-base font-bold text-slate-800">Tidak Ada Kasus Menunggu Tindakan</h4>
+                                            <p class="text-xs text-slate-500 max-w-md mx-auto">Semua siswa dengan keterlambatan tinggi pada periode ini telah tuntas ditindaklanjuti oleh Guru BK.</p>
+                                        </div>
+                                        <div v-else-if="topTab === 'resolved'" class="space-y-1">
+                                            <p class="text-sm text-slate-500 font-medium">Belum ada siswa yang tercatat telah ditindaklanjuti pada periode ini.</p>
+                                        </div>
+                                        <div v-else class="space-y-1">
+                                            <p class="text-sm text-slate-500 font-medium">Belum ada data keterlambatan pada periode ini.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>

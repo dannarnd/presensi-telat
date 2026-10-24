@@ -135,23 +135,61 @@ const getCounselingBadge = (student, delayNumber) => {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div v-if="student.counseling_logs_count > 0">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <div v-if="student.delay_logs_count >= 6">
+                                        <span v-if="student.counseling_logs_count >= 3" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                             <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Ditindaklanjuti ({{ student.counseling_logs_count }}x Bimbingan)
+                                            Konferensi Kasus / SP Selesai ({{ student.counseling_logs_count }}x Bimbingan)
                                         </span>
+                                        <div v-else>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300 animate-pulse">
+                                                <svg class="w-3.5 h-3.5 mr-1 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                Wajib Konferensi Kasus / SP (Tahap 3)
+                                            </span>
+                                            <div class="text-[11px] text-purple-700 font-semibold mt-0.5">
+                                                {{ student.counseling_logs_count > 0 ? `Baru ${student.counseling_logs_count}x bimbingan, perlu SP/Rapat Kasus` : 'Perlu Rapat Kasus bersama Kepala Sekolah' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="student.delay_logs_count >= 5">
+                                        <span v-if="student.counseling_logs_count >= 2" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Panggilan Ortu Selesai ({{ student.counseling_logs_count }}x Bimbingan)
+                                        </span>
+                                        <div v-else>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
+                                                <svg class="w-3.5 h-3.5 mr-1 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                Wajib Panggilan Orang Tua (Tahap 2)
+                                            </span>
+                                            <div class="text-[11px] text-rose-600 font-semibold mt-0.5">
+                                                {{ student.counseling_logs_count > 0 ? 'Sudah bimbingan siswa, ortu belum hadir' : 'Orang tua wajib diundang ke sekolah' }}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div v-else-if="student.delay_logs_count >= 3">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
-                                            <svg class="w-3.5 h-3.5 mr-1 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        <span v-if="student.counseling_logs_count >= 1" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                            <svg class="w-3.5 h-3.5 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Belum Ditindaklanjuti BK
+                                            Bimbingan Siswa Selesai
                                         </span>
-                                        <div class="text-[11px] text-rose-600 font-semibold mt-0.5">
-                                            {{ student.delay_logs_count >= 5 ? 'Perlu Panggilan Orang Tua' : 'Perlu Bimbingan Siswa' }}
+                                        <div v-else>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                <svg class="w-3.5 h-3.5 mr-1 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                Wajib Bimbingan Siswa (Tahap 1)
+                                            </span>
+                                            <div class="text-[11px] text-amber-700 font-semibold mt-0.5">
+                                                Perlu pembinaan langsung oleh Guru BK
+                                            </div>
                                         </div>
                                     </div>
                                     <div v-else-if="student.delay_logs_count > 0">

@@ -158,6 +158,8 @@ class KepalaSekolahController extends Controller
             $student->last_counseling_at = $summary ? $summary->last_counseling_at : null;
             $student->last_counselor_name = $latest ? $latest->counselor_name : null;
             $student->last_counseling_notes = $latest ? $latest->notes : null;
+            $student->last_counseling_delay_count = $latest ? (int) ($latest->delay_count ?? 0) : 0;
+            $student->last_counseling_stage = $latest ? $latest->stage : null;
         }
 
         // 7. Most Problematic Class

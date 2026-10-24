@@ -61,13 +61,13 @@ const getWarningBadge = (student) => {
     const counselingCount = student?.counseling_logs_count ?? student?.counseling_logs?.length ?? 0;
 
     if (lateCount >= 6) {
-        if (counselingCount >= 2) {
-            return { class: 'bg-purple-100 text-purple-800 border-purple-200', text: `SP / Kasus Berat (${counselingCount}x Bimbingan)` };
+        if (counselingCount >= 3) {
+            return { class: 'bg-emerald-100 text-emerald-800 border-emerald-300', text: `Konferensi Kasus / SP Selesai (${counselingCount}x Bimbingan)` };
         }
-        return { class: 'bg-purple-600 text-white border-purple-700 animate-pulse', text: 'Perlu Konferensi Kasus / SP' };
+        return { class: 'bg-purple-100 text-purple-800 border-purple-300 font-black animate-pulse', text: 'Wajib Konferensi Kasus / SP (Tahap 3)' };
     } else if (lateCount >= 5) {
         if (counselingCount >= 2) {
-            return { class: 'bg-emerald-100 text-emerald-800 border-emerald-200', text: 'Panggilan Ortu Selesai' };
+            return { class: 'bg-emerald-100 text-emerald-800 border-emerald-200', text: `Panggilan Ortu Selesai (${counselingCount}x Bimbingan)` };
         }
         return { class: 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse', text: 'Wajib Panggilan Ortu (Tahap 2)' };
     } else if (lateCount >= 3) {
@@ -266,6 +266,22 @@ const submitCounseling = () => {
                                         :class="['px-2.5 py-1 inline-flex text-xs font-bold rounded-full border', getWarningBadge(student).class]">
                                         {{ getWarningBadge(student).text }}
                                     </span>
+
+                                    <!-- Keterangan Penanganan BK (Penyelesai & Titik Keterlambatan) -->
+                                    <div v-if="student.counseling_logs && student.counseling_logs.length > 0" class="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0 shadow-sm"></span>
+                                        <span class="truncate max-w-[140px]" :title="'Konselor: ' + student.counseling_logs[0].counselor_name">
+                                            Oleh: <strong class="text-slate-700">{{ student.counseling_logs[0].counselor_name }}</strong>
+                                        </span>
+                                        <span class="text-slate-300">&bull;</span>
+                                        <span class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0">
+                                            Telat ke-{{ student.counseling_logs[0].delay_count || student.delay_logs_count }}
+                                        </span>
+                                    </div>
+                                    <div v-else-if="student.delay_logs_count >= 3" class="mt-1 text-[11px] text-rose-500 font-semibold flex items-center justify-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block animate-ping"></span>
+                                        <span>Belum ada tindakan BK</span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
                                     <button @click="openDetail(student)"
