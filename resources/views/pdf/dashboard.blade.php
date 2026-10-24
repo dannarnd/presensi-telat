@@ -142,18 +142,19 @@
     <div class="summary-box">
         <h3>Ringkasan Keterlambatan ({{ $periodLabel }})</h3>
         <p>Total Pelanggaran: <strong>{{ $totalLate }} keterlambatan</strong></p>
-        <p>Tingkat Penanganan BK: <strong>{{ $resolutionRate }}% ({{ $resolvedLogs }} selesai dari {{ $totalLate }})</strong></p>
+        <p>Tingkat Penanganan BK: <strong>{{ $resolutionRate }}% ({{ $resolvedLogs }} selesai dari {{ $resolvedLogs + $activeLogs }} siswa wajib BK)</strong></p>
     </div>
 
-    <h3>Daftar Keterlambatan Terbanyak ({{ $periodLabel }})</h3>
+    <h3>Monitoring Penanganan Keterlambatan Siswa ({{ $periodLabel }})</h3>
     <table class="data-table">
         <thead>
             <tr>
-                <th width="10%" class="text-center">No</th>
-                <th width="20%">NISN</th>
-                <th width="40%">Nama Siswa</th>
-                <th width="15%" class="text-center">Kelas</th>
-                <th width="15%" class="text-center">Total Telat</th>
+                <th width="7%" class="text-center">No</th>
+                <th width="18%">NISN</th>
+                <th width="27%">Nama Siswa</th>
+                <th width="13%" class="text-center">Kelas</th>
+                <th width="10%" class="text-center">Total Telat</th>
+                <th width="25%">Status Penanganan BK</th>
             </tr>
         </thead>
         <tbody>
@@ -161,13 +162,39 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>{{ $student->nisn }}</td>
-                    <td>{{ $student->name }}</td>
+                    <td><strong>{{ $student->name }}</strong></td>
                     <td class="text-center">{{ $student->class_name }}</td>
-                    <td class="text-center">{{ $student->total_late }}x</td>
+                    <td class="text-center"><strong>{{ $student->total_late }}x</strong></td>
+                    <td>
+                        @if($student->total_late >= 6)
+                            @if($student->counseling_count > 0 && ($student->last_counseling_delay_count >= $student->total_late || str_contains($student->last_counseling_stage, 'Tahap 3') || str_contains($student->last_counseling_stage, 'SP')))
+                                <span style="color: #059669; font-weight: bold;">Tuntas (SP / Konferensi)</span><br>
+                                <small style="color: #6b7280;">Oleh: {{ $student->last_counselor_name ?? 'Guru BK' }}</small>
+                            @else
+                                <span style="color: #b91c1c; font-weight: bold;">Wajib SP / Konferensi Kasus</span>
+                            @endif
+                        @elseif($student->total_late >= 5)
+                            @if($student->counseling_count > 0 && ($student->last_counseling_delay_count >= $student->total_late || str_contains($student->last_counseling_stage, 'Tahap 2') || str_contains($student->last_counseling_stage, 'Panggilan')))
+                                <span style="color: #059669; font-weight: bold;">Tuntas (Panggilan Ortu)</span><br>
+                                <small style="color: #6b7280;">Oleh: {{ $student->last_counselor_name ?? 'Guru BK' }}</small>
+                            @else
+                                <span style="color: #b91c1c; font-weight: bold;">Wajib Panggilan Ortu (Tahap 2)</span>
+                            @endif
+                        @elseif($student->total_late >= 3)
+                            @if($student->counseling_count > 0)
+                                <span style="color: #2563eb; font-weight: bold;">Tuntas (Bimbingan Siswa)</span><br>
+                                <small style="color: #6b7280;">Oleh: {{ $student->last_counselor_name ?? 'Guru BK' }}</small>
+                            @else
+                                <span style="color: #d97706; font-weight: bold;">Wajib Bimbingan Siswa (Tahap 1)</span>
+                            @endif
+                        @else
+                            <span style="color: #6b7280;">Pembinaan Wali Kelas (1-2x)</span>
+                        @endif
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="text-center">Tidak ada data keterlambatan pada periode ini.</td>
+                    <td colspan="6" class="text-center">Tidak ada data keterlambatan pada periode ini.</td>
                 </tr>
             @endforelse
         </tbody>
