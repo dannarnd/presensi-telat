@@ -39,14 +39,66 @@ const printPdf = () => {
     printUrl.value = route('kepala_sekolah.pdf', { period: selectedPeriod.value, t: Date.now() });
 };
 
+// Helper status penyelesaian bimbingan BK
+const isTahap3Done = (student) => {
+    const late = student?.total_late || 0;
+    const count = student?.counseling_count || 0;
+    const lastDelay = student?.last_counseling_delay_count || 0;
+    const lastStage = student?.last_counseling_stage || '';
+
+    if (count === 0) return false;
+    if (lastDelay >= late) return true;
+    if (lastStage.includes('Tahap 3') || lastStage.includes('Konferensi') || lastStage.includes('SP')) return true;
+    if (count >= 3) return true;
+    return false;
+};
+
+const isTahap2Done = (student) => {
+    const late = student?.total_late || 0;
+    const count = student?.counseling_count || 0;
+    const lastDelay = student?.last_counseling_delay_count || 0;
+    const lastStage = student?.last_counseling_stage || '';
+
+    if (count === 0) return false;
+    if (lastDelay >= late) return true;
+    if (lastStage.includes('Tahap 2') || lastStage.includes('Panggilan') || isTahap3Done(student)) return true;
+    if (count >= 2) return true;
+    return false;
+};
+
+const isTahap1Done = (student) => {
+    const late = student?.total_late || 0;
+    const count = student?.counseling_count || 0;
+    const lastDelay = student?.last_counseling_delay_count || 0;
+
+    if (count === 0) return false;
+    if (lastDelay >= late) return true;
+    if (count >= 1) return true;
+    return false;
+};
+
 // Filter Tab 10 Besar (Perlu Tindakan BK vs Sudah Ditindaklanjuti)
 const isStudentNeedsBK = (student) => {
     const late = student.total_late || 0;
-    const count = student.counseling_count || 0;
+    const lastDelay = student.last_counseling_delay_count || 0;
     if (late < 3) return false;
-    if (late >= 6) return count < 3;
-    if (late >= 5) return count < 2;
-    if (late >= 3) return count < 1;
+
+    // Jika bimbingan terakhir sudah mencakup titik keterlambatan saat ini (misal telat 6x dan sudah dibimbing di telat ke-6)
+    if (lastDelay >= late) return false;
+
+    if (late >= 6) {
+        if (!isTahap3Done(student)) return true;
+        if (lastDelay > 0 && late > lastDelay) return true; // Telat pasca-SP
+        return false;
+    }
+    if (late >= 5) {
+        if (!isTahap2Done(student)) return true;
+        if (lastDelay > 0 && late > lastDelay) return true; // Telat pasca-panggilan
+        return false;
+    }
+    if (late >= 3) {
+        return !isTahap1Done(student);
+    }
     return false;
 };
 
@@ -321,18 +373,32 @@ const getCounselingBadge = (student, delayNumber) => {
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <!-- Kasus Tahap 3 (Telat >= 6x) -->
                                         <div v-if="student.total_late >= 6">
-                                            <div v-if="student.counseling_count >= 3">
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    Konferensi Kasus / SP Selesai ({{ student.counseling_count }}x Bimbingan)
-                                                </span>
-                                                <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
-                                                    <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
-                                                    <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
-                                                    <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                            <div v-if="isTahap3Done(student)">
+                                                <div v-if="student.last_counseling_delay_count > 0 && student.total_late > student.last_counseling_delay_count">
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                                        <svg class="w-3.5 h-3.5 mr-1 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                        </svg>
+                                                        Telat Pasca-SP (+{{ student.total_late - student.last_counseling_delay_count }}x)
+                                                    </span>
+                                                    <div class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block shrink-0"></span>
+                                                        <span>SP oleh: <strong>{{ student.last_counselor_name }}</strong> (Telat ke-{{ student.last_counseling_delay_count }})</span>
+                                                    </div>
+                                                </div>
+                                                <div v-else>
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Konferensi Kasus / SP Selesai ({{ student.counseling_count }}x Bimbingan)
+                                                    </span>
+                                                    <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                                        <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
+                                                        <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
+                                                        <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div v-else>
@@ -344,7 +410,7 @@ const getCounselingBadge = (student, delayNumber) => {
                                                 </span>
                                                 <div v-if="student.counseling_count > 0 && student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0"></span>
-                                                    <span>Sebelumnya oleh: <strong>{{ student.last_counselor_name }}</strong></span>
+                                                    <span>Tahap sebelumnya oleh: <strong>{{ student.last_counselor_name }}</strong></span>
                                                     <span class="text-slate-400">({{ student.counseling_count }}x Bimbingan)</span>
                                                 </div>
                                                 <div v-else class="text-[11px] text-purple-600 font-semibold mt-0.5">
@@ -355,18 +421,32 @@ const getCounselingBadge = (student, delayNumber) => {
 
                                         <!-- Kasus Tahap 2 (Telat 5x) -->
                                         <div v-else-if="student.total_late >= 5">
-                                            <div v-if="student.counseling_count >= 2">
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                    Panggilan Ortu Selesai ({{ student.counseling_count }}x Bimbingan)
-                                                </span>
-                                                <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
-                                                    <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
-                                                    <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
-                                                    <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                            <div v-if="isTahap2Done(student)">
+                                                <div v-if="student.last_counseling_delay_count > 0 && student.total_late > student.last_counseling_delay_count">
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 font-bold">
+                                                        <svg class="w-3.5 h-3.5 mr-1 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                        </svg>
+                                                        Telat Pasca-Panggilan (+{{ student.total_late - student.last_counseling_delay_count }}x)
+                                                    </span>
+                                                    <div class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block shrink-0"></span>
+                                                        <span>Panggilan oleh: <strong>{{ student.last_counselor_name }}</strong> (Telat ke-{{ student.last_counseling_delay_count }})</span>
+                                                    </div>
+                                                </div>
+                                                <div v-else>
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        Panggilan Ortu Selesai ({{ student.counseling_count }}x Bimbingan)
+                                                    </span>
+                                                    <div v-if="student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                                        <span>Oleh: <strong class="text-slate-700">{{ student.last_counselor_name }}</strong></span>
+                                                        <span v-if="student.last_counseling_delay_count" class="text-slate-300">&bull;</span>
+                                                        <span v-if="student.last_counseling_delay_count" class="text-indigo-600 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded text-[10px] font-bold">Telat ke-{{ student.last_counseling_delay_count }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div v-else>
@@ -378,7 +458,7 @@ const getCounselingBadge = (student, delayNumber) => {
                                                 </span>
                                                 <div v-if="student.counseling_count > 0 && student.last_counselor_name" class="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0"></span>
-                                                    <span>Sebelumnya oleh: <strong>{{ student.last_counselor_name }}</strong></span>
+                                                    <span>Tahap sebelumnya oleh: <strong>{{ student.last_counselor_name }}</strong></span>
                                                 </div>
                                                 <div v-else class="text-[11px] text-rose-600 font-semibold mt-0.5">
                                                     Orang tua wajib diundang ke sekolah
@@ -388,7 +468,7 @@ const getCounselingBadge = (student, delayNumber) => {
 
                                         <!-- Kasus Tahap 1 (Telat 3-4x) -->
                                         <div v-else-if="student.total_late >= 3">
-                                            <div v-if="student.counseling_count >= 1">
+                                            <div v-if="isTahap1Done(student)">
                                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                                     <svg class="w-3.5 h-3.5 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

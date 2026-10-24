@@ -56,22 +56,76 @@ const generateWaLink = (student) => {
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
 
+const isTahap3Done = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0 && (student?.counseling_logs_count || 0) === 0) return false;
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+    const lastStage = latest?.stage ?? '';
+    const count = student?.counseling_logs_count ?? logs.length;
+
+    if (lastDelay >= late) return true;
+    if (lastStage.includes('Tahap 3') || lastStage.includes('Konferensi') || lastStage.includes('SP')) return true;
+    if (count >= 3) return true;
+    return false;
+};
+
+const isTahap2Done = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0 && (student?.counseling_logs_count || 0) === 0) return false;
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+    const lastStage = latest?.stage ?? '';
+    const count = student?.counseling_logs_count ?? logs.length;
+
+    if (lastDelay >= late) return true;
+    if (lastStage.includes('Tahap 2') || lastStage.includes('Panggilan') || isTahap3Done(student)) return true;
+    if (count >= 2) return true;
+    return false;
+};
+
+const isTahap1Done = (student) => {
+    const late = student?.delay_logs_count ?? student?.total_late ?? 0;
+    const logs = student?.counseling_logs || [];
+    if (logs.length === 0 && (student?.counseling_logs_count || 0) === 0) return false;
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
+    const count = student?.counseling_logs_count ?? logs.length;
+
+    if (lastDelay >= late) return true;
+    if (count >= 1) return true;
+    return false;
+};
+
 const getWarningBadge = (student) => {
     const lateCount = student?.delay_logs_count ?? student?.total_late ?? (typeof student === 'number' ? student : 0);
     const counselingCount = student?.counseling_logs_count ?? student?.counseling_logs?.length ?? 0;
+    const logs = student?.counseling_logs || [];
+    const latest = logs[0];
+    const lastDelay = latest?.delay_count ?? 0;
 
     if (lateCount >= 6) {
-        if (counselingCount >= 3) {
+        if (isTahap3Done(student)) {
+            if (lastDelay > 0 && lateCount > lastDelay) {
+                const diff = lateCount - lastDelay;
+                return { class: 'bg-rose-100 text-rose-800 border-rose-300 font-bold', text: `Telat Pasca-SP (+${diff}x)` };
+            }
             return { class: 'bg-emerald-100 text-emerald-800 border-emerald-300', text: `Konferensi Kasus / SP Selesai (${counselingCount}x Bimbingan)` };
         }
         return { class: 'bg-purple-100 text-purple-800 border-purple-300 font-black animate-pulse', text: 'Wajib Konferensi Kasus / SP (Tahap 3)' };
     } else if (lateCount >= 5) {
-        if (counselingCount >= 2) {
+        if (isTahap2Done(student)) {
+            if (lastDelay > 0 && lateCount > lastDelay) {
+                const diff = lateCount - lastDelay;
+                return { class: 'bg-rose-100 text-rose-800 border-rose-300 font-bold', text: `Telat Pasca-Panggilan (+${diff}x)` };
+            }
             return { class: 'bg-emerald-100 text-emerald-800 border-emerald-200', text: `Panggilan Ortu Selesai (${counselingCount}x Bimbingan)` };
         }
         return { class: 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse', text: 'Wajib Panggilan Ortu (Tahap 2)' };
     } else if (lateCount >= 3) {
-        if (counselingCount >= 1) {
+        if (isTahap1Done(student)) {
             return { class: 'bg-blue-100 text-blue-800 border-blue-200', text: 'Bimbingan Siswa Selesai' };
         }
         return { class: 'bg-amber-100 text-amber-800 border-amber-300', text: 'Wajib Bimbingan Siswa (Tahap 1)' };
